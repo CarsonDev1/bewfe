@@ -37,10 +37,28 @@ export interface CreatePostRequest {
 	seoKeywords?: string[];
 }
 
+// NEW: Update post request interface
+export interface UpdatePostRequest {
+	title?: string;
+	excerpt?: string;
+	content?: string;
+	featuredImage?: string;
+	categoryId?: string;
+	tagIds?: string[];
+	status?: 'draft' | 'published' | 'archived';
+	isFeatured?: boolean;
+	isSticky?: boolean;
+	publishedAt?: string;
+	seoTitle?: string;
+	seoDescription?: string;
+	seoKeywords?: string[];
+}
+
 export interface CreatePostResponse {
 	data: Post;
 	message: string;
 }
+
 
 export interface GetPostsParams {
 	page?: number;
@@ -66,6 +84,7 @@ export interface GetPostsResponse {
 	};
 }
 
+
 // FIXED: Upload response interface theo actual API response
 export interface UploadPostImageResponse {
 	message: string;
@@ -81,6 +100,10 @@ export interface UploadPostImageResponse {
 	};
 }
 
+export interface DeletePostResponse {
+	message: string;
+}
+
 // Services
 export const createPost = async (data: CreatePostRequest): Promise<CreatePostResponse> => {
 	const response = await api.post('/posts', data);
@@ -92,13 +115,23 @@ export const getPosts = async (params?: GetPostsParams): Promise<GetPostsRespons
 	return response.data;
 };
 
-// NEW: Get post by slug service
+// Get post by slug service
 export const getPostBySlug = async (slug: string): Promise<Post> => {
 	const response = await api.get(`/posts/slug/${slug}`);
 	return response.data;
 };
 
-// FIXED: Upload service - check endpoint và field name
+// NEW: Update post service
+export const updatePost = async (id: string, data: UpdatePostRequest): Promise<any> => {
+	const response = await api.patch(`/posts/${id}`, data);
+	return response.data;
+};
+
+export const deletePost = async (id: string): Promise<DeletePostResponse> => {
+	const response = await api.delete(`/posts/${id}`);
+	return response.data;
+};
+
 export const uploadPostImage = async (file: File): Promise<UploadPostImageResponse> => {
 	const formData = new FormData();
 	formData.append('file', file); // Hoặc 'image' - check API documentation

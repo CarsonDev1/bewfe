@@ -39,42 +39,42 @@ import { getMe } from '@/services/auth-service';
 
 const sidebarItems = [
 	{
-		title: 'Dashboard',
+		title: 'Trang chủ',
 		href: '/admin',
 		icon: LayoutDashboard,
 	},
 	{
-		title: 'Posts',
+		title: 'Bài viết',
 		href: '/admin/posts',
 		icon: FileText,
 	},
 	{
-		title: 'Categories',
+		title: 'Danh mục',
 		href: '/admin/categories',
 		icon: FolderTree,
 	},
 	{
-		title: 'Tags',
+		title: 'Thẻ',
 		href: '/admin/tags',
 		icon: Tag,
 	},
 	{
-		title: 'Users',
+		title: 'Người dùng',
 		href: '/admin/users',
 		icon: Users,
 	},
 	{
-		title: 'Media',
+		title: 'Thư viện',
 		href: '/admin/media',
 		icon: Image,
 	},
 	{
-		title: 'Analytics',
+		title: 'Thống kê',
 		href: '/admin/analytics',
 		icon: BarChart3,
 	},
 	{
-		title: 'Settings',
+		title: 'Cài đặt',
 		href: '/admin/settings',
 		icon: Settings,
 	},
@@ -122,18 +122,18 @@ function UserDropdown({ user, onLogout }: UserDropdownProps) {
 				<DropdownMenuItem asChild>
 					<Link href='/admin/profile' className='cursor-pointer'>
 						<User className='mr-2 h-4 w-4' />
-						Profile
+						Hồ sơ
 					</Link>
 				</DropdownMenuItem>
 				<DropdownMenuItem asChild>
 					<Link href='/admin/account' className='cursor-pointer'>
 						<Settings className='mr-2 h-4 w-4' />
-						Account Settings
+						Cài đặt tài khoản
 					</Link>
 				</DropdownMenuItem>
 				<DropdownMenuItem onClick={onLogout} className='cursor-pointer text-red-600 focus:text-red-600'>
 					<LogOut className='mr-2 h-4 w-4' />
-					Logout
+					Đăng xuất
 				</DropdownMenuItem>
 			</DropdownMenuContent>
 		</DropdownMenu>
@@ -185,7 +185,7 @@ export function AppSidebar() {
 	return (
 		<Sidebar>
 			<SidebarHeader>
-				<h2 className='text-lg font-semibold'>Forum Admin</h2>
+				<h2 className='text-lg font-semibold'>Quản trị diễn đàn</h2>
 			</SidebarHeader>
 
 			<SidebarContent>
@@ -224,7 +224,7 @@ export function AppSidebar() {
 							<SidebarMenuButton asChild>
 								<Link href='/login'>
 									<User />
-									<span>Login</span>
+									<span>Đăng nhập</span>
 								</Link>
 							</SidebarMenuButton>
 						)}

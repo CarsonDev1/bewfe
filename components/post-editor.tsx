@@ -384,96 +384,6 @@ const EditorWrapper = ({ value, onChange, isFullScreen, uploadImage }: any) => {
 	);
 };
 
-// Custom CSS for TinyMCE
-// const tinyMCECustomCSS = `
-// 	.tox-tinymce {
-// 		border-radius: 8px;
-// 		border: 1px solid #e2e8f0;
-// 		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-// 	}
-
-// 	.tox-toolbar {
-// 		background: #f8fafc !important;
-// 		border-bottom: 1px solid #e2e8f0 !important;
-// 		padding: 8px !important;
-// 	}
-
-// 	.tox-toolbar__group {
-// 		border: 1px solid #e2e8f0 !important;
-// 		border-radius: 6px !important;
-// 		margin: 2px !important;
-// 		padding: 2px !important;
-// 	}
-
-// 	.tox-tbtn {
-// 		border-radius: 4px !important;
-// 		margin: 1px !important;
-// 	}
-
-// 	.tox-tbtn:hover {
-// 		background: #e2e8f0 !important;
-// 	}
-
-// 	.tox-tbtn--enabled {
-// 		background: #3b82f6 !important;
-// 		color: white !important;
-// 	}
-
-// 	.tox-edit-area {
-// 		border: none !important;
-// 	}
-
-// 	.tox-statusbar {
-// 		border-top: 1px solid #e2e8f0 !important;
-// 		background: #f8fafc !important;
-// 		padding: 8px 16px !important;
-// 		font-size: 12px !important;
-// 		color: #6b7280 !important;
-// 	}
-
-// 	.fullscreen-editor {
-// 		position: fixed !important;
-// 		top: 0 !important;
-// 		left: 0 !important;
-// 		width: 100vw !important;
-// 		height: 100vh !important;
-// 		z-index: 9999 !important;
-// 		background: white !important;
-// 		padding: 20px !important;
-// 		box-sizing: border-box !important;
-// 	}
-
-// 	.fullscreen-editor .tox-tinymce {
-// 		height: calc(100vh - 100px) !important;
-// 	}
-
-// 	.tox-menubar {
-// 		background: #f8fafc !important;
-// 		border-bottom: 1px solid #e2e8f0 !important;
-// 	}
-
-// 	.tox .tox-menu {
-// 		border-radius: 8px !important;
-// 		box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
-// 	}
-
-// 	.tox .tox-dialog {
-// 		border-radius: 12px !important;
-// 		box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15) !important;
-// 	}
-// `;
-
-// Inject CSS
-// if (typeof document !== 'undefined') {
-// 	const existingStyle = document.getElementById('tinymce-custom-style');
-// 	if (!existingStyle) {
-// 		const styleElement = document.createElement('style');
-// 		styleElement.id = 'tinymce-custom-style';
-// 		styleElement.textContent = tinyMCECustomCSS;
-// 		document.head.appendChild(styleElement);
-// 	}
-// }
-
 // Schema validation
 const postSchema = z.object({
 	title: z.string().min(1, 'Tiêu đề là bắt buộc'),
@@ -500,8 +410,8 @@ interface Post {
 	excerpt?: string;
 	content: string;
 	featuredImage?: string;
-	categoryId?: string;
-	tagIds?: string[];
+	categoryId?: any;
+	tagIds?: any;
 	status: 'draft' | 'published' | 'archived';
 	isFeatured: boolean;
 	isSticky: boolean;
@@ -517,9 +427,10 @@ interface PostEditorProps {
 	post?: Post;
 	onSave?: (post: Post) => void;
 	onCancel?: () => void;
+	isUpdating?: boolean;
 }
 
-export function PostEditor({ post, onSave, onCancel }: PostEditorProps) {
+export function PostEditor({ post, onSave, onCancel, isUpdating }: PostEditorProps) {
 	const [selectedTags, setSelectedTags] = useState<string[]>([]);
 	const [newKeyword, setNewKeyword] = useState('');
 	const [previewMode, setPreviewMode] = useState(false);
@@ -578,7 +489,7 @@ export function PostEditor({ post, onSave, onCancel }: PostEditorProps) {
 			excerpt: post?.excerpt || '',
 			content: post?.content || '',
 			featuredImage: post?.featuredImage || '',
-			categoryId: typeof post?.categoryId === 'string' ? post.categoryId : '',
+			categoryId: post?.categoryId?.id,
 			tagIds: post?.tagIds || [],
 			status: post?.status || 'draft',
 			isFeatured: post?.isFeatured || false,
@@ -592,14 +503,15 @@ export function PostEditor({ post, onSave, onCancel }: PostEditorProps) {
 
 	useEffect(() => {
 		if (post?.tagIds) {
-			setSelectedTags(post.tagIds);
-			setValue('tagIds', post.tagIds);
+			const tagIds = post.tagIds.map((tag: any) => (typeof tag === 'string' ? tag : tag.id));
+			setSelectedTags(tagIds);
+			setValue('tagIds', tagIds);
 		}
 	}, [post, setValue]);
 
 	const onSubmit = async (data: PostFormData) => {
 		try {
-			const payload: CreatePostRequest = {
+			const payload: any = {
 				title: data.title,
 				excerpt: data.excerpt || undefined,
 				content: data.content,
@@ -618,7 +530,11 @@ export function PostEditor({ post, onSave, onCancel }: PostEditorProps) {
 				seoKeywords: data.seoKeywords && data.seoKeywords.length > 0 ? data.seoKeywords : undefined,
 			};
 
-			createPostMutation.mutate(payload);
+			if (post && onSave) {
+				onSave(payload);
+			} else {
+				createPostMutation.mutate(payload);
+			}
 		} catch (error) {
 			console.error('Error saving post:', error);
 		}
@@ -897,10 +813,10 @@ export function PostEditor({ post, onSave, onCancel }: PostEditorProps) {
 									<div className='pt-4 border-t'>
 										<Button
 											type='submit'
-											disabled={isSubmitting || createPostMutation.isPending}
+											disabled={isSubmitting || isUpdating || createPostMutation.isPending}
 											className='bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200 w-full'
 										>
-											{isSubmitting || createPostMutation.isPending ? (
+											{isSubmitting || isUpdating || createPostMutation.isPending ? (
 												<>
 													<Loader2 className='mr-2 h-4 w-4 animate-spin' />
 													Đang tạo...

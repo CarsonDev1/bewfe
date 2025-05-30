@@ -31,15 +31,33 @@ import {
 	Pin,
 	Sparkles,
 	BarChart3,
+	Loader2,
 } from 'lucide-react';
 import { usePosts, useDeletePost } from '@/hooks/api';
 import { formatDistanceToNow, format } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { deletePost } from '@/services/posts-service';
+import { toast } from 'sonner';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 export default function PostsPage() {
 	const [search, setSearch] = useState('');
 	const [page, setPage] = useState(1);
 	const [status, setStatus] = useState<any>('');
+	const queryClient = useQueryClient();
+	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+	const [postToDelete, setPostToDelete] = useState<string | null>(null);
 
 	const { data: postsData, isLoading } = usePosts({
 		page,
@@ -48,17 +66,39 @@ export default function PostsPage() {
 		status: status || undefined,
 	});
 
-	const deletePost = useDeletePost();
+	const openDeleteDialog = (postId: string) => {
+		setPostToDelete(postId);
+		setDeleteDialogOpen(true);
+	};
 
-	const handleDelete = async (id: string) => {
-		if (confirm('Bạn có chắc chắn muốn xóa bài viết này?')) {
+	const confirmDelete = async () => {
+		if (postToDelete) {
 			try {
-				await deletePost.mutateAsync(id);
+				await deletePostMutation.mutateAsync(postToDelete);
+				setDeleteDialogOpen(false);
+				setPostToDelete(null);
 			} catch (error) {
 				console.error('Error deleting post:', error);
 			}
 		}
 	};
+
+	const cancelDelete = () => {
+		setDeleteDialogOpen(false);
+		setPostToDelete(null);
+	};
+
+	const deletePostMutation = useMutation({
+		mutationFn: deletePost,
+		onSuccess: () => {
+			toast.success('Xóa bài viết thành công!');
+			// Invalidate queries để refetch data
+			queryClient.invalidateQueries({ queryKey: ['posts'] });
+		},
+		onError: (error: any) => {
+			toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi xóa bài viết');
+		},
+	});
 
 	const getStatusBadge = (status: string) => {
 		const variants = {
@@ -130,7 +170,7 @@ export default function PostsPage() {
 				{/* Enhanced Stats Cards */}
 				<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
 					<Card className='border-0 hover:shadow-blue-200/50 transition-all duration-300 transform hover:-translate-y-1 group'>
-						<CardContent className='p-8'>
+						<CardContent className='p-4'>
 							<div className='flex items-center gap-6'>
 								<div className='p-4 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-xl group-hover:shadow-blue-300/50 transition-all duration-300 transform group-hover:scale-110'>
 									<Hash className='h-8 w-8 text-white' />
@@ -148,7 +188,7 @@ export default function PostsPage() {
 					</Card>
 
 					<Card className='border-0 hover:shadow-green-200/50 transition-all duration-300 transform hover:-translate-y-1 group'>
-						<CardContent className='p-8'>
+						<CardContent className='p-4'>
 							<div className='flex items-center gap-6'>
 								<div className='p-4 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl shadow-xl group-hover:shadow-green-300/50 transition-all duration-300 transform group-hover:scale-110'>
 									<TrendingUp className='h-8 w-8 text-white' />
@@ -166,7 +206,7 @@ export default function PostsPage() {
 					</Card>
 
 					<Card className='border-0 hover:shadow-amber-200/50 transition-all duration-300 transform hover:-translate-y-1 group'>
-						<CardContent className='p-8'>
+						<CardContent className='p-4'>
 							<div className='flex items-center gap-6'>
 								<div className='p-4 bg-gradient-to-br from-amber-500 to-yellow-600 rounded-2xl shadow-xl group-hover:shadow-yellow-300/50 transition-all duration-300 transform group-hover:scale-110'>
 									<Edit className='h-8 w-8 text-white' />
@@ -184,7 +224,7 @@ export default function PostsPage() {
 					</Card>
 
 					<Card className='border-0 hover:shadow-purple-200/50 transition-all duration-300 transform hover:-translate-y-1 group'>
-						<CardContent className='p-8'>
+						<CardContent className='p-4'>
 							<div className='flex items-center gap-6'>
 								<div className='p-4 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl shadow-xl group-hover:shadow-purple-300/50 transition-all duration-300 transform group-hover:scale-110'>
 									<BarChart3 className='h-8 w-8 text-white' />
@@ -204,7 +244,7 @@ export default function PostsPage() {
 
 				{/* Enhanced Posts Table Card */}
 				<Card className='border-0 shadow-none'>
-					<CardHeader className='border-b-0 p-8'>
+					<CardHeader className='border-b-0 p-4'>
 						<div className='flex items-center gap-6'>
 							<div className='relative flex-1'>
 								<Search className='absolute left-4 top-1/2 transform -translate-y-1/2 h-6 w-6 text-slate-400' />
@@ -309,11 +349,11 @@ export default function PostsPage() {
 														{/* Enhanced Post Info */}
 														<div className='flex-1 min-w-20'>
 															<div className='font-bold text-slate-900 text-xl leading-tight mb-2 group-hover:text-blue-700 transition-colors'>
-																{truncateText(post.title, 50)}
+																{truncateText(post.title, 30)}
 															</div>
 															{post.excerpt && (
 																<p className='text-slate-600 text-sm leading-relaxed font-medium'>
-																	{truncateText(post.excerpt, 80)}
+																	{truncateText(post.excerpt, 30)}
 																</p>
 															)}
 														</div>
@@ -377,7 +417,7 @@ export default function PostsPage() {
 																</div>
 																<span className='font-bold'>{post.viewCount || 0}</span>
 															</div>
-															<div
+															{/* <div
 																className='flex items-center gap-2 text-slate-600 font-semibold hover:text-red-500 transition-colors'
 																title='Lượt thích'
 															>
@@ -385,8 +425,8 @@ export default function PostsPage() {
 																	<Heart className='w-4 h-4 text-red-500' />
 																</div>
 																<span className='font-bold'>{post.likeCount || 0}</span>
-															</div>
-															<div
+															</div> */}
+															{/* <div
 																className='flex items-center gap-2 text-slate-600 font-semibold hover:text-green-600 transition-colors'
 																title='Bình luận'
 															>
@@ -396,7 +436,7 @@ export default function PostsPage() {
 																<span className='font-bold'>
 																	{post.commentCount || 0}
 																</span>
-															</div>
+															</div> */}
 														</div>
 													</div>
 												</TableCell>
@@ -451,12 +491,56 @@ export default function PostsPage() {
 																</Link>
 															</DropdownMenuItem>
 															<DropdownMenuItem
-																onClick={() => handleDelete(post.id)}
+																onClick={() => openDeleteDialog(post.id)}
+																disabled={deletePostMutation.isPending}
 																className='text-red-600 hover:text-red-800 hover:bg-red-50 cursor-pointer py-3 px-4 font-semibold rounded-xl transition-colors'
 															>
 																<Trash2 className='mr-3 h-5 w-5' />
 																Xóa bài viết
 															</DropdownMenuItem>
+
+															<AlertDialog
+																open={deleteDialogOpen}
+																onOpenChange={setDeleteDialogOpen}
+															>
+																<AlertDialogContent className='max-w-md'>
+																	<AlertDialogHeader>
+																		<AlertDialogTitle className='flex items-center gap-2 text-red-600'>
+																			<Trash2 className='h-5 w-5' />
+																			Xác nhận xóa bài viết
+																		</AlertDialogTitle>
+																		<AlertDialogDescription className='text-slate-600'>
+																			Bạn có chắc chắn muốn xóa bài viết này
+																			không? Hành động này không thể hoàn tác.
+																		</AlertDialogDescription>
+																	</AlertDialogHeader>
+																	<AlertDialogFooter className='gap-2'>
+																		<AlertDialogCancel
+																			onClick={cancelDelete}
+																			className='hover:bg-slate-100'
+																		>
+																			Hủy
+																		</AlertDialogCancel>
+																		<AlertDialogAction
+																			onClick={confirmDelete}
+																			disabled={deletePostMutation.isPending}
+																			className='bg-red-600 hover:bg-red-700 text-white'
+																		>
+																			{deletePostMutation.isPending ? (
+																				<>
+																					<Loader2 className='mr-2 h-4 w-4 animate-spin' />
+																					Đang xóa...
+																				</>
+																			) : (
+																				<>
+																					<Trash2 className='mr-2 h-4 w-4' />
+																					Xóa bài viết
+																				</>
+																			)}
+																		</AlertDialogAction>
+																	</AlertDialogFooter>
+																</AlertDialogContent>
+															</AlertDialog>
 														</DropdownMenuContent>
 													</DropdownMenu>
 												</TableCell>
