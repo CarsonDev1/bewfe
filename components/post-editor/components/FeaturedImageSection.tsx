@@ -5,8 +5,8 @@ import { UseFormSetValue, UseFormWatch } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { X, Upload, Loader2 } from 'lucide-react';
+import { PostFormData } from '../types/postTypes';
 import { toast } from 'sonner';
-import { PostFormData } from '@/components/post-editor/types/postTypes';
 
 interface FeaturedImageSectionProps {
 	watch: UseFormWatch<PostFormData>;

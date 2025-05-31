@@ -1,4 +1,18 @@
 import api from '@/lib/axiosInstance';
+import { z } from 'zod';
+
+// Related Product Schema - Make currency required with default value
+export const relatedProductSchema = z.object({
+	name: z.string(),
+	url_key: z.string(),
+	image_url: z.string(),
+	price: z.number(),
+	currency: z.string().min(1, 'Currency is required'), // Make currency required
+	sale_price: z.number().optional(),
+	product_url: z.string(),
+});
+
+export type RelatedProduct = z.infer<typeof relatedProductSchema>;
 
 export interface Post {
 	id: string;
@@ -19,6 +33,7 @@ export interface Post {
 	createdAt: string;
 	updatedAt: string;
 	authorId: any;
+	relatedProducts?: RelatedProduct[];
 }
 
 export interface CreatePostRequest {
@@ -28,6 +43,7 @@ export interface CreatePostRequest {
 	featuredImage?: string;
 	categoryId?: string;
 	tagIds?: string[];
+	relatedProducts?: RelatedProduct[];
 	status?: 'draft' | 'published' | 'archived';
 	isFeatured?: boolean;
 	isSticky?: boolean;
@@ -37,7 +53,7 @@ export interface CreatePostRequest {
 	seoKeywords?: string[];
 }
 
-// NEW: Update post request interface
+// Updated: Include relatedProducts in update request
 export interface UpdatePostRequest {
 	title?: string;
 	excerpt?: string;
@@ -45,6 +61,7 @@ export interface UpdatePostRequest {
 	featuredImage?: string;
 	categoryId?: string;
 	tagIds?: string[];
+	relatedProducts?: RelatedProduct[];
 	status?: 'draft' | 'published' | 'archived';
 	isFeatured?: boolean;
 	isSticky?: boolean;
@@ -59,6 +76,11 @@ export interface CreatePostResponse {
 	message: string;
 }
 
+// NEW: Update post response interface
+export interface UpdatePostResponse {
+	data: Post;
+	message: string;
+}
 
 export interface GetPostsParams {
 	page?: number;
@@ -83,7 +105,6 @@ export interface GetPostsResponse {
 		pages: number;
 	};
 }
-
 
 // FIXED: Upload response interface theo actual API response
 export interface UploadPostImageResponse {
@@ -115,14 +136,26 @@ export const getPosts = async (params?: GetPostsParams): Promise<GetPostsRespons
 	return response.data;
 };
 
+// NEW: Get current user's posts
+export const getMyPosts = async (params?: GetPostsParams): Promise<GetPostsResponse> => {
+	const response = await api.get('/posts/my-posts', { params });
+	return response.data;
+};
+
 // Get post by slug service
 export const getPostBySlug = async (slug: string): Promise<Post> => {
 	const response = await api.get(`/posts/slug/${slug}`);
 	return response.data;
 };
 
-// NEW: Update post service
-export const updatePost = async (id: string, data: UpdatePostRequest): Promise<any> => {
+// Get post by ID service
+export const getPostById = async (id: string): Promise<Post> => {
+	const response = await api.get(`/posts/${id}`);
+	return response.data;
+};
+
+// UPDATED: Update post service with proper types
+export const updatePost = async (id: string, data: UpdatePostRequest): Promise<UpdatePostResponse> => {
 	const response = await api.patch(`/posts/${id}`, data);
 	return response.data;
 };
@@ -143,4 +176,45 @@ export const uploadPostImage = async (file: File): Promise<UploadPostImageRespon
 		},
 	});
 	return response.data;
+};
+
+// Helper function to prepare post data for API
+export const preparePostData = (data: any): UpdatePostRequest | CreatePostRequest => {
+	// Remove undefined fields and prepare data according to API schema
+	const cleanedData: any = {};
+
+	if (data.title !== undefined) cleanedData.title = data.title;
+	if (data.excerpt !== undefined && data.excerpt !== '') cleanedData.excerpt = data.excerpt;
+	if (data.content !== undefined) cleanedData.content = data.content;
+	if (data.featuredImage !== undefined && data.featuredImage !== '') cleanedData.featuredImage = data.featuredImage;
+	if (data.categoryId !== undefined && data.categoryId !== '') cleanedData.categoryId = data.categoryId;
+	if (data.tagIds !== undefined && Array.isArray(data.tagIds) && data.tagIds.length > 0) {
+		cleanedData.tagIds = data.tagIds;
+	}
+	if (data.relatedProducts !== undefined && Array.isArray(data.relatedProducts) && data.relatedProducts.length > 0) {
+		// Ensure all related products have required currency field
+		cleanedData.relatedProducts = data.relatedProducts.map((product: any) => ({
+			...product,
+			currency: product.currency || 'VND', // Fallback to VND if currency is missing
+		}));
+	}
+	if (data.status !== undefined) cleanedData.status = data.status;
+	if (data.isFeatured !== undefined) cleanedData.isFeatured = data.isFeatured;
+	if (data.isSticky !== undefined) cleanedData.isSticky = data.isSticky;
+
+	// Auto-generate publishedAt when status is 'published' and publishedAt is not already set
+	if (data.status === 'published' && data.publishedAt) {
+		cleanedData.publishedAt = data.publishedAt;
+	} else if (data.status === 'published' && !data.publishedAt) {
+		cleanedData.publishedAt = new Date().toISOString();
+	}
+
+	if (data.seoTitle !== undefined && data.seoTitle !== '') cleanedData.seoTitle = data.seoTitle;
+	if (data.seoDescription !== undefined && data.seoDescription !== '')
+		cleanedData.seoDescription = data.seoDescription;
+	if (data.seoKeywords !== undefined && Array.isArray(data.seoKeywords) && data.seoKeywords.length > 0) {
+		cleanedData.seoKeywords = data.seoKeywords;
+	}
+
+	return cleanedData;
 };

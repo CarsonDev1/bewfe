@@ -224,66 +224,7 @@ export default function EditPostPage() {
 					<div className='absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-pink-400/20 to-rose-600/20 rounded-full blur-3xl'></div>
 				</div>
 
-				<div className='relative z-10 max-w-7xl mx-auto p-6'>
-					{/* Enhanced Header */}
-					<div className='mb-8'>
-						<Button
-							variant='outline'
-							asChild
-							className='mb-6 shadow-lg hover:shadow-xl transition-all duration-200'
-						>
-							<Link href='/admin/posts'>
-								<ArrowLeft className='mr-2 h-4 w-4' />
-								Quay lại danh sách
-							</Link>
-						</Button>
-
-						<div className='flex items-center gap-4 mb-6'>
-							<div className='p-3 bg-gradient-to-br from-amber-600 to-orange-700 rounded-2xl shadow-lg'>
-								<Hash className='h-8 w-8 text-white' />
-							</div>
-							<div>
-								<h1 className='text-4xl font-black bg-gradient-to-r from-slate-800 via-amber-800 to-orange-800 bg-clip-text text-transparent leading-tight'>
-									Chỉnh sửa bài viết
-								</h1>
-								<p className='text-slate-600 mt-2 text-lg font-medium'>
-									Cập nhật nội dung và thông tin bài viết của bạn
-								</p>
-							</div>
-						</div>
-
-						{/* Post Info Card */}
-						<Card className='border-0 shadow-lg bg-white/70 backdrop-blur-sm mb-6'>
-							<CardContent className='p-6'>
-								<div className='flex items-start gap-6'>
-									{post.featuredImage && (
-										<img
-											src={post.featuredImage}
-											alt={post.title}
-											className='w-20 h-20 object-cover rounded-xl shadow-md'
-										/>
-									)}
-									<div className='flex-1'>
-										<h3 className='text-xl font-bold text-slate-900 mb-2'>{post.title}</h3>
-										<div className='flex items-center gap-4 text-sm text-slate-600'>
-											<span className='flex items-center gap-1'>
-												📝 <strong>Slug:</strong> {post.slug}
-											</span>
-											<span className='flex items-center gap-1'>
-												📅 <strong>Tạo:</strong>{' '}
-												{new Date(post.createdAt).toLocaleDateString('vi-VN')}
-											</span>
-											<span className='flex items-center gap-1'>
-												🔄 <strong>Cập nhật:</strong>{' '}
-												{new Date(post.updatedAt).toLocaleDateString('vi-VN')}
-											</span>
-										</div>
-									</div>
-								</div>
-							</CardContent>
-						</Card>
-					</div>
-
+				<div className='relative z-10 w-full mx-auto p-6'>
 					{/* PostEditor with loading overlay */}
 					<div className='relative'>
 						{updatePostMutation.isPending && (

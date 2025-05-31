@@ -1,6 +1,19 @@
 import { z } from 'zod';
 
-// Schema validation
+// Related Product Schema - Make currency required with default value
+export const relatedProductSchema = z.object({
+	name: z.string(),
+	url_key: z.string(),
+	image_url: z.string(),
+	price: z.number(),
+	currency: z.string().min(1, 'Currency is required'), // Make currency required
+	sale_price: z.number().optional(),
+	product_url: z.string(),
+});
+
+export type RelatedProduct = z.infer<typeof relatedProductSchema>;
+
+// Post Schema - Make sure all fields are properly typed
 export const postSchema = z.object({
 	title: z.string().min(1, 'Tiêu đề là bắt buộc'),
 	excerpt: z.string().optional().or(z.literal('')),
@@ -8,6 +21,7 @@ export const postSchema = z.object({
 	featuredImage: z.string().optional().or(z.literal('')),
 	categoryId: z.string().min(1, 'Danh mục là bắt buộc'),
 	tagIds: z.array(z.string()).optional(),
+	relatedProducts: z.array(relatedProductSchema).optional(),
 	status: z.enum(['draft', 'published', 'archived']).optional(),
 	isFeatured: z.boolean().optional(),
 	isSticky: z.boolean().optional(),
@@ -17,8 +31,39 @@ export const postSchema = z.object({
 	seoKeywords: z.array(z.string()).optional(),
 });
 
+// Type được infer từ schema - điều này đảm bảo consistency
 export type PostFormData = z.infer<typeof postSchema>;
 
+// Product interfaces từ API
+export interface ProductImage {
+	url: string;
+}
+
+export interface ProductPrice {
+	currency: string;
+	value: number;
+}
+
+export interface ProductPriceRange {
+	minimum_price: {
+		final_price: ProductPrice;
+	};
+}
+
+export interface Product {
+	name: string;
+	url_key: string;
+	image: ProductImage;
+	price_range: ProductPriceRange;
+	daily_sale: any | null;
+}
+
+export interface ProductsResponse {
+	data: Product[];
+	total: number;
+}
+
+// Post interface - phải match với PostFormData
 export interface Post {
 	id: string;
 	title: string;
@@ -28,6 +73,7 @@ export interface Post {
 	featuredImage?: string;
 	categoryId?: any;
 	tagIds?: any;
+	relatedProducts?: RelatedProduct[];
 	status: 'draft' | 'published' | 'archived';
 	isFeatured: boolean;
 	isSticky: boolean;

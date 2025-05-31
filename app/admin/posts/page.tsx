@@ -139,7 +139,7 @@ export default function PostsPage() {
 	};
 
 	return (
-		<div className='relative'>
+		<div className='relative p-6'>
 			<div className='relative z-10 space-y-8 w-full mx-auto'>
 				{/* Enhanced Header */}
 				<div className='flex items-center justify-between'>
@@ -199,7 +199,7 @@ export default function PostsPage() {
 										Đã xuất bản
 									</p>
 									<p className='text-4xl font-black bg-gradient-to-r from-emerald-600 to-green-700 bg-clip-text text-transparent'>
-										{postsData?.data.filter((post) => post.status === 'published').length || 0}
+										{postsData?.data.filter((post: any) => post.status === 'published').length || 0}
 									</p>
 								</div>
 							</div>
@@ -217,7 +217,7 @@ export default function PostsPage() {
 										Bản nháp
 									</p>
 									<p className='text-4xl font-black bg-gradient-to-r from-amber-600 to-yellow-700 bg-clip-text text-transparent'>
-										{postsData?.data.filter((post) => post.status === 'draft').length || 0}
+										{postsData?.data.filter((post: any) => post.status === 'draft').length || 0}
 									</p>
 								</div>
 							</div>
@@ -235,7 +235,10 @@ export default function PostsPage() {
 										Tổng lượt xem
 									</p>
 									<p className='text-4xl font-black bg-gradient-to-r from-purple-600 to-pink-700 bg-clip-text text-transparent'>
-										{postsData?.data.reduce((sum, post) => sum + (post.viewCount || 0), 0) || 0}
+										{postsData?.data.reduce(
+											(sum: any, post: any) => sum + (post.viewCount || 0),
+											0
+										) || 0}
 									</p>
 								</div>
 							</div>

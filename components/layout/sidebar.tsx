@@ -16,6 +16,7 @@ import {
 	User,
 	LogOut,
 	ChevronUp,
+	File,
 } from 'lucide-react';
 import {
 	Sidebar,
@@ -39,11 +40,6 @@ import { getMe } from '@/services/auth-service';
 
 const sidebarItems = [
 	{
-		title: 'Trang chủ',
-		href: '/admin',
-		icon: LayoutDashboard,
-	},
-	{
 		title: 'Bài viết',
 		href: '/admin/posts',
 		icon: FileText,
@@ -64,9 +60,9 @@ const sidebarItems = [
 		icon: Users,
 	},
 	{
-		title: 'Thư viện',
-		href: '/admin/media',
-		icon: Image,
+		title: 'Bài viết của tôi',
+		href: '/admin/my-post',
+		icon: File,
 	},
 	{
 		title: 'Thống kê',

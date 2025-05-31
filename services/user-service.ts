@@ -45,6 +45,50 @@ export interface UploadAvatarResponse {
 	};
 }
 
+// User interface for GET /users API
+export interface User {
+	id: string;
+	username: string;
+	email: string;
+	firstName?: string;
+	lastName?: string;
+	displayName?: string;
+	bio?: string;
+	avatar?: string;
+	website?: string;
+	location?: string;
+	role: 'user' | 'moderator' | 'admin';
+	status: 'active' | 'inactive' | 'banned';
+	isPublic: boolean;
+	postCount?: number;
+	followerCount?: number;
+	createdAt: string;
+	updatedAt: string;
+}
+
+// Parameters for GET /users API
+export interface GetUsersParams {
+	page?: number;
+	limit?: number;
+	search?: string;
+	role?: 'user' | 'moderator' | 'admin';
+	status?: 'active' | 'inactive' | 'banned';
+	isPublic?: boolean;
+	sortBy?: 'createdAt' | 'postCount' | 'followerCount' | 'username';
+	sortOrder?: 'asc' | 'desc';
+}
+
+// Response for GET /users API
+export interface GetUsersResponse {
+	data: User[];
+	pagination: {
+		page: number;
+		limit: number;
+		total: number;
+		pages: number;
+	};
+}
+
 /**
  * Cập nhật profile người dùng hiện tại
  * @param profileData - Dữ liệu profile cần cập nhật
@@ -75,6 +119,20 @@ export const uploadAvatar = async (file: File): Promise<UploadAvatarResponse> =>
 			},
 		});
 
+		return response.data;
+	} catch (error: any) {
+		throw error;
+	}
+};
+
+/**
+ * Lấy danh sách tất cả users với pagination và filters
+ * @param params - Parameters để filter và phân trang
+ * @returns Promise với danh sách users
+ */
+export const getUsers = async (params?: GetUsersParams): Promise<GetUsersResponse> => {
+	try {
+		const response = await api.get<GetUsersResponse>('/users', { params });
 		return response.data;
 	} catch (error: any) {
 		throw error;

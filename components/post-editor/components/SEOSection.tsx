@@ -9,8 +9,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { X } from 'lucide-react';
+import { PostFormData } from '../types/postTypes';
 import { toast } from 'sonner';
-import { PostFormData } from '@/components/post-editor/types/postTypes';
 
 interface SEOSectionProps {
 	control: Control<PostFormData>;

@@ -6,8 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EditorWrapper } from './TinyMCEWrapper';
+import { PostFormData } from '../types/postTypes';
 import { uploadPostImage } from '@/services/posts-service';
-import { PostFormData } from '@/components/post-editor/types/postTypes';
 
 interface PostContentSectionProps {
 	control: Control<PostFormData>;

@@ -6,7 +6,23 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Calendar, User, Eye, Heart, MessageCircle, Share2, Star, Pin, Hash, Clock } from 'lucide-react';
+import {
+	ArrowLeft,
+	Calendar,
+	User,
+	Eye,
+	Heart,
+	MessageCircle,
+	Share2,
+	Star,
+	Pin,
+	Hash,
+	Clock,
+	Package,
+	ExternalLink,
+	ShoppingCart,
+	Tag,
+} from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import Link from 'next/link';
@@ -35,6 +51,16 @@ const PostDetail = () => {
 	});
 
 	const post = postResponse;
+
+	// Format price function
+	const formatPrice = (price: number, currency: string = 'VND'): string => {
+		return new Intl.NumberFormat('vi-VN', {
+			style: 'currency',
+			currency: 'VND',
+			minimumFractionDigits: 0,
+			maximumFractionDigits: 0,
+		}).format(price);
+	};
 
 	// Loading state
 	if (isLoading) {
@@ -215,7 +241,13 @@ const PostDetail = () => {
 							{post.authorId && (
 								<div className='flex items-center gap-3'>
 									{post.authorId.avatar ? (
-										<Image src={post.authorId.avatar} width={40} height={40} alt='avatar' />
+										<Image
+											src={post.authorId.avatar}
+											width={40}
+											height={40}
+											alt='avatar'
+											className='rounded-full'
+										/>
 									) : (
 										<div className='w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center'>
 											<User className='w-5 h-5 text-white' />
@@ -271,10 +303,123 @@ const PostDetail = () => {
 							dangerouslySetInnerHTML={{ __html: post.content }}
 						/>
 
+						{/* Related Products Section */}
+						{post.relatedProducts && post.relatedProducts.length > 0 && (
+							<div className='mt-12 pt-8 border-t border-slate-200'>
+								<div className='flex items-center gap-3 mb-6'>
+									<div className='w-8 h-8 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center'>
+										<Package className='w-4 h-4 text-white' />
+									</div>
+									<h3 className='text-sm font-bold text-slate-900'>
+										Danh sách sản phẩm đang được quan tâm nhiều tại{' '}
+										<Link href={'https://bachlongmobile.com/'} className='text-blue-700'>
+											Bach Long Mobile
+										</Link>
+									</h3>
+									<Badge variant='outline' className='ml-auto'>
+										{post.relatedProducts.length} sản phẩm
+									</Badge>
+								</div>
+
+								<div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6'>
+									{post.relatedProducts.map((product, index) => (
+										<Card
+											key={index}
+											className='group hover:shadow-lg transition-all duration-300 border border-slate-200 hover:border-blue-300 rounded-xl overflow-hidden'
+										>
+											<div className='relative p-2'>
+												<Image
+													src={product.image_url}
+													alt={product.name}
+													className='w-full h-48 object-contain'
+													onError={(e) => {
+														e.currentTarget.src = '/placeholder-product.png';
+													}}
+													width={140}
+													height={140}
+												/>
+											</div>
+
+											<CardContent className='p-4'>
+												<h4 className='font-semibold text-slate-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors'>
+													{product.name}
+												</h4>
+
+												<div className='flex items-center justify-between mb-3'>
+													<div className='flex flex-col'>
+														<span className='text-lg font-bold text-red-600'>
+															{formatPrice(product.price, product.currency)}
+														</span>
+														{product.sale_price && product.sale_price < product.price && (
+															<span className='text-sm text-slate-500 line-through'>
+																{formatPrice(product.sale_price, product.currency)}
+															</span>
+														)}
+													</div>
+
+													{product.sale_price && product.sale_price < product.price && (
+														<Badge className='bg-gradient-to-r from-red-500 to-rose-600 text-white text-xs'>
+															Sale
+														</Badge>
+													)}
+												</div>
+
+												<div className='flex gap-2'>
+													<Button
+														size='sm'
+														className='flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
+														asChild
+													>
+														<a
+															href={product.product_url}
+															target='_blank'
+															rel='noopener noreferrer'
+															className='flex items-center justify-center gap-2'
+														>
+															<ShoppingCart className='w-4 h-4' />
+															Mua ngay
+														</a>
+													</Button>
+
+													<Button size='sm' variant='outline' asChild>
+														<a
+															href={product.product_url}
+															target='_blank'
+															rel='noopener noreferrer'
+															className='flex items-center justify-center'
+														>
+															<ExternalLink className='w-4 h-4' />
+														</a>
+													</Button>
+												</div>
+											</CardContent>
+										</Card>
+									))}
+								</div>
+
+								{/* Related Products Footer */}
+								<div className='mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200'>
+									<div className='flex items-center gap-2 text-blue-800'>
+										<Package className='w-5 h-5' />
+										<span className='font-semibold'>Thông tin sản phẩm</span>
+									</div>
+									<p className='text-sm text-blue-700 mt-2'>
+										Các sản phẩm được liệt kê có liên quan đến nội dung bài viết. Giá cả và tình
+										trạng sản phẩm có thể thay đổi theo thời gian.
+									</p>
+								</div>
+							</div>
+						)}
+
 						{/* Tags */}
 						{post.tagIds && post.tagIds.length > 0 && (
 							<div className='mt-12 pt-8 border-t border-slate-200'>
-								<h3 className='text-lg font-bold text-slate-900 mb-4'>Tags</h3>
+								<div className='flex items-center gap-3 mb-4'>
+									<div className='w-6 h-6 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center'>
+										<Tag className='w-3 h-3 text-white' />
+									</div>
+									<h3 className='text-lg font-bold text-slate-900'>Tags</h3>
+								</div>
 								<div className='flex flex-wrap gap-3'>
 									{post.tagIds.map((tag, index) => (
 										<Badge
