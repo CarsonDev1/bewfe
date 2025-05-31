@@ -196,7 +196,7 @@ const UsersPage = () => {
 
 	return (
 		<div>
-			<div className='w-full mx-auto p-6'>
+			<div className='w-full mx-auto'>
 				{/* Header */}
 				<div className='mb-8'>
 					<div className='flex items-center justify-between mb-6'>

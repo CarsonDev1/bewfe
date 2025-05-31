@@ -139,7 +139,7 @@ export default function PostsPage() {
 	};
 
 	return (
-		<div className='relative p-6'>
+		<div className='relative'>
 			<div className='relative z-10 space-y-8 w-full mx-auto'>
 				{/* Enhanced Header */}
 				<div className='flex items-center justify-between'>
