@@ -3,7 +3,7 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getPostBySlug, updatePost } from '@/services/posts-service';
-import { PostEditor } from '@/components/post-editor';
+import { PostEditor } from '@/components/post-editor/post-editor';
 import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

@@ -75,10 +75,11 @@ export default function PostsPage() {
 		if (postToDelete) {
 			try {
 				await deletePostMutation.mutateAsync(postToDelete);
-				setDeleteDialogOpen(false);
-				setPostToDelete(null);
 			} catch (error) {
 				console.error('Error deleting post:', error);
+			} finally {
+				setDeleteDialogOpen(false);
+				setPostToDelete(null);
 			}
 		}
 	};
@@ -491,7 +492,10 @@ export default function PostsPage() {
 																</Link>
 															</DropdownMenuItem>
 															<DropdownMenuItem
-																onClick={() => openDeleteDialog(post.id)}
+																onSelect={(e) => {
+																	e.preventDefault();
+																	openDeleteDialog(post.id);
+																}}
 																disabled={deletePostMutation.isPending}
 																className='text-red-600 hover:text-red-800 hover:bg-red-50 cursor-pointer py-3 px-4 font-semibold rounded-xl transition-colors'
 															>

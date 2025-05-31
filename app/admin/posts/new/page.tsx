@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { PostEditor } from '@/components/post-editor';
+import { PostEditor } from '@/components/post-editor/post-editor';
 
 interface Post {
 	id: string;
