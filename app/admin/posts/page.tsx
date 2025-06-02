@@ -33,7 +33,7 @@ import {
 	BarChart3,
 	Loader2,
 } from 'lucide-react';
-import { usePosts, useDeletePost } from '@/hooks/api';
+import { usePosts } from '@/hooks/api';
 import { formatDistanceToNow, format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { deletePost } from '@/services/posts-service';

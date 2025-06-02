@@ -12,7 +12,6 @@ import {
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useLogout } from '@/hooks/api';
 import { useRouter } from 'next/navigation';
 
 interface HeaderProps {
@@ -20,12 +19,11 @@ interface HeaderProps {
 }
 
 export function Header({ onMenuClick }: HeaderProps) {
-	const logout = useLogout();
 	const router = useRouter();
 
 	const handleLogout = async () => {
 		try {
-			await logout.mutateAsync();
+			// await logout.mutateAsync();
 			router.push('/login');
 		} catch (error) {
 			console.error('Logout error:', error);
