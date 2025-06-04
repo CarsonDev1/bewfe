@@ -163,8 +163,8 @@ export function PostEditor({ post, onSave, onCancel, isUpdating }: PostEditorPro
 					data.status === 'published' && !post?.publishedAt
 						? new Date().toISOString()
 						: data.status === 'published'
-						? post?.publishedAt
-						: undefined,
+							? post?.publishedAt
+							: undefined,
 			};
 
 			// Clean the data according to API requirements
