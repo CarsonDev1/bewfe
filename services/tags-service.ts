@@ -12,6 +12,7 @@ export interface Tag {
 	seoDescription?: string;
 	createdAt: string;
 	updatedAt: string;
+	image?: string;
 }
 
 export interface CreateTagRequest {
@@ -63,6 +64,13 @@ export interface GetTagsResponse {
 	};
 }
 
+export interface UploadTagImageResponse {
+	data: {
+		imageUrl: string;
+	};
+	message: string;
+}
+
 export const createTag = async (data: CreateTagRequest): Promise<CreateTagResponse> => {
 	const response = await api.post('/tags', data);
 	return response.data;
@@ -85,5 +93,19 @@ export const updateTag = async (id: string, data: UpdateTagRequest): Promise<Upd
 
 export const deleteTag = async (id: string): Promise<DeleteTagResponse> => {
 	const response = await api.delete(`/tags/${id}`);
+	return response.data;
+};
+
+// Upload tag image function
+export const uploadTagImage = async (id: string, file: File): Promise<UploadTagImageResponse> => {
+	const formData = new FormData();
+	formData.append('file', file);
+
+	const response = await api.post(`/tags/${id}/image`, formData, {
+		headers: {
+			'Content-Type': 'multipart/form-data',
+		},
+	});
+
 	return response.data;
 };

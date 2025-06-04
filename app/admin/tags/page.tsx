@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
@@ -15,6 +15,9 @@ import {
 	AlertTriangle,
 	Palette,
 	Hash,
+	Upload,
+	Image as ImageIcon,
+	X,
 } from 'lucide-react';
 import {
 	Dialog,
@@ -49,9 +52,15 @@ import {
 	updateTag,
 	deleteTag,
 	getTags,
+	uploadTagImage,
 	CreateTagRequest,
 	UpdateTagRequest,
 } from '@/services/tags-service';
+
+// Extend Tag interface locally to include image
+interface TagWithImage extends Tag {
+	image?: string;
+}
 
 const PRESET_COLORS = [
 	'#ef4444',
@@ -78,12 +87,14 @@ const PRESET_COLORS = [
 
 const TagsPage = () => {
 	const queryClient = useQueryClient();
+	const fileInputRef = useRef<HTMLInputElement>(null);
 	const [open, setOpen] = useState(false);
 	const [editOpen, setEditOpen] = useState(false);
 	const [deleteOpen, setDeleteOpen] = useState(false);
-	const [selectedTag, setSelectedTag] = useState<Tag | null>(null);
+	const [selectedTag, setSelectedTag] = useState<TagWithImage | null>(null);
 	const [searchTerm, setSearchTerm] = useState('');
 	const [currentPage, setCurrentPage] = useState(1);
+	const [previewImage, setPreviewImage] = useState<string | null>(null);
 	const [formData, setFormData] = useState<CreateTagRequest>({
 		name: '',
 		description: '',
@@ -154,6 +165,25 @@ const TagsPage = () => {
 		},
 		onError: (error: any) => {
 			toast.error(error.response?.data?.message || 'Xóa tag thất bại');
+		},
+	});
+
+	// Upload image mutation
+	const uploadImageMutation = useMutation({
+		mutationFn: ({ id, file }: { id: string; file: File }) => uploadTagImage(id, file),
+		onSuccess: (data) => {
+			toast.success('Upload ảnh thành công!');
+			queryClient.invalidateQueries({ queryKey: ['tags'] });
+			setPreviewImage(null);
+			// Update selected tag to reflect new image
+			if (selectedTag) {
+				const updatedTag = { ...selectedTag, image: data.data.imageUrl };
+				setSelectedTag(updatedTag);
+			}
+		},
+		onError: (error: any) => {
+			toast.error(error.response?.data?.message || 'Upload ảnh thất bại');
+			setPreviewImage(null);
 		},
 	});
 
@@ -248,6 +278,40 @@ const TagsPage = () => {
 		}));
 	};
 
+	// Image upload handlers
+	const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const file = e.target.files?.[0];
+		if (!file) return;
+
+		// Validate file size (10MB max)
+		if (file.size > 10 * 1024 * 1024) {
+			toast.error('Kích thước file không được vượt quá 10MB');
+			return;
+		}
+
+		// Validate file type
+		if (!file.type.startsWith('image/')) {
+			toast.error('Vui lòng chọn file ảnh hợp lệ');
+			return;
+		}
+
+		// Create preview
+		const reader = new FileReader();
+		reader.onload = (e) => {
+			setPreviewImage(e.target?.result as string);
+		};
+		reader.readAsDataURL(file);
+
+		// Upload image
+		if (selectedTag) {
+			uploadImageMutation.mutate({ id: selectedTag.id, file });
+		}
+	};
+
+	const triggerImageUpload = () => {
+		fileInputRef.current?.click();
+	};
+
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!formData.name.trim()) {
@@ -315,11 +379,10 @@ const TagsPage = () => {
 						key={color}
 						type='button'
 						onClick={() => onColorChange(color)}
-						className={`w-8 h-8 rounded-full border-2 transition-all ${
-							selectedColor === color
-								? 'border-gray-900 scale-110'
-								: 'border-gray-200 hover:border-gray-400'
-						}`}
+						className={`w-8 h-8 rounded-full border-2 transition-all ${selectedColor === color
+							? 'border-gray-900 scale-110'
+							: 'border-gray-200 hover:border-gray-400'
+							}`}
 						style={{ backgroundColor: color }}
 					/>
 				))}
@@ -366,18 +429,25 @@ const TagsPage = () => {
 		return tagsData.data.map((tag) => (
 			<Card
 				key={tag.id}
-				className={`cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-[1.02] border-slate-200 p-0 ${
-					selectedTag?.id === tag.id ? 'ring-2 ring-blue-500 shadow-lg' : 'hover:shadow-md'
-				}`}
+				className={`cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-[1.02] border-slate-200 p-0 ${selectedTag?.id === tag.id ? 'ring-2 ring-blue-500 shadow-lg' : 'hover:shadow-md'
+					}`}
 				onClick={() => setSelectedTag(tag)}
 			>
 				<CardContent className='p-2'>
 					<div className='flex items-start justify-between mb-4'>
 						<div className='flex items-center gap-3'>
-							<div
-								className='w-4 h-4 rounded-full border-2 border-white shadow-sm'
-								style={{ backgroundColor: tag.color || '#6b7280' }}
-							/>
+							{tag.image ? (
+								<img
+									src={tag.image}
+									alt={tag.name}
+									className='w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm'
+								/>
+							) : (
+								<div
+									className='w-4 h-4 rounded-full border-2 border-white shadow-sm'
+									style={{ backgroundColor: tag.color || '#6b7280' }}
+								/>
+							)}
 							<h3 className='font-semibold text-gray-900 flex-1 truncate w-24'>{tag.name}</h3>
 						</div>
 						{!tag.isActive && (
@@ -449,6 +519,15 @@ const TagsPage = () => {
 							</h1>
 							<p className='text-gray-600 mt-2'>Quản lý thẻ tag và phân loại nội dung</p>
 						</div>
+
+						{/* Hidden file input for image upload */}
+						<input
+							ref={fileInputRef}
+							type='file'
+							accept='image/*'
+							onChange={handleImageUpload}
+							className='hidden'
+						/>
 
 						{/* Create Tag Dialog */}
 						<Dialog open={open} onOpenChange={setOpen}>
@@ -894,12 +973,36 @@ const TagsPage = () => {
 							<CardContent className='p-6'>
 								{selectedTag ? (
 									<div className='space-y-6'>
-										{/* Header */}
+										{/* Header with Image Upload */}
 										<div className='text-center'>
-											<div
-												className='w-16 h-16 rounded-full mx-auto mb-4 border-4 border-white shadow-lg'
-												style={{ backgroundColor: selectedTag.color || '#6b7280' }}
-											/>
+											<div className='relative inline-block mb-4'>
+												{selectedTag.image ? (
+													<img
+														src={selectedTag.image}
+														alt={selectedTag.name}
+														className='w-16 h-16 rounded-full mx-auto border-4 border-white shadow-lg object-cover'
+													/>
+												) : (
+													<div
+														className='w-16 h-16 rounded-full mx-auto border-4 border-white shadow-lg'
+														style={{ backgroundColor: selectedTag.color || '#6b7280' }}
+													/>
+												)}
+												{/* Upload Image Button */}
+												<button
+													onClick={triggerImageUpload}
+													disabled={uploadImageMutation.isPending}
+													className='absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors shadow-lg'
+													title='Upload ảnh tag'
+												>
+													{uploadImageMutation.isPending ? (
+														<Loader2 className='w-3 h-3 animate-spin' />
+													) : (
+														<Upload className='w-3 h-3' />
+													)}
+												</button>
+											</div>
+
 											<h2 className='text-xl font-bold text-gray-900 mb-2'>{selectedTag.name}</h2>
 											<div className='flex items-center justify-center gap-2'>
 												<Badge variant='outline' className='font-mono text-xs'>
@@ -913,15 +1016,36 @@ const TagsPage = () => {
 											</div>
 											<Badge
 												variant={selectedTag.isActive ? 'default' : 'destructive'}
-												className={`mt-3 ${
-													selectedTag.isActive
-														? 'bg-green-100 text-green-800 hover:bg-green-200'
-														: 'bg-red-100 text-red-800 hover:bg-red-200'
-												}`}
+												className={`mt-3 ${selectedTag.isActive
+													? 'bg-green-100 text-green-800 hover:bg-green-200'
+													: 'bg-red-100 text-red-800 hover:bg-red-200'
+													}`}
 											>
 												{selectedTag.isActive ? '🟢 Đang hoạt động' : '🔴 Tạm dừng'}
 											</Badge>
 										</div>
+
+										{/* Image Preview */}
+										{previewImage && (
+											<div className='relative'>
+												<div className='bg-gray-50 rounded-lg p-4 border-2 border-dashed border-gray-200'>
+													<img
+														src={previewImage}
+														alt='Preview'
+														className='w-full h-32 object-cover rounded-lg'
+													/>
+													<button
+														onClick={() => setPreviewImage(null)}
+														className='absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors'
+													>
+														<X className='w-3 h-3' />
+													</button>
+												</div>
+												<p className='text-xs text-gray-500 mt-2 text-center'>
+													{uploadImageMutation.isPending ? 'Đang upload...' : 'Ảnh đang được tải lên'}
+												</p>
+											</div>
+										)}
 
 										<Separator />
 
@@ -934,6 +1058,25 @@ const TagsPage = () => {
 											>
 												<Edit className='w-4 h-4 mr-2' />
 												Chỉnh sửa
+											</Button>
+											<Button
+												onClick={triggerImageUpload}
+												size='sm'
+												variant='outline'
+												className='w-full border-blue-200 hover:bg-blue-50'
+												disabled={uploadImageMutation.isPending}
+											>
+												{uploadImageMutation.isPending ? (
+													<>
+														<Loader2 className='w-4 h-4 mr-2 animate-spin' />
+														Đang upload...
+													</>
+												) : (
+													<>
+														<ImageIcon className='w-4 h-4 mr-2' />
+														Upload ảnh
+													</>
+												)}
 											</Button>
 											<Button
 												onClick={handleDeleteTag}
@@ -960,8 +1103,17 @@ const TagsPage = () => {
 											)}
 
 											<div>
-												<Label className='text-sm font-medium text-gray-600'>Màu sắc</Label>
+												<Label className='text-sm font-medium text-gray-600'>
+													{selectedTag.image ? 'Ảnh & Màu sắc' : 'Màu sắc'}
+												</Label>
 												<div className='flex items-center gap-3 mt-2'>
+													{selectedTag.image && (
+														<img
+															src={selectedTag.image}
+															alt={selectedTag.name}
+															className='w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm'
+														/>
+													)}
 													<div
 														className='w-6 h-6 rounded-full border-2 border-white shadow-sm'
 														style={{ backgroundColor: selectedTag.color || '#6b7280' }}

@@ -20,7 +20,6 @@ interface FeaturedImageSectionProps {
 export const FeaturedImageSection = ({ watch, setValue, uploadImageMutation }: FeaturedImageSectionProps) => {
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const watchedFeaturedImage = watch('featuredImage');
-	console.log('watchedFeaturedImage', watchedFeaturedImage);
 
 
 	const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
