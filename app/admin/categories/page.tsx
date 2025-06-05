@@ -94,7 +94,7 @@ const CategoriesPage = () => {
 		error: categoriesError,
 	} = useQuery({
 		queryKey: ['categories'],
-		queryFn: () => getCategories({ includeChildren: true }),
+		queryFn: () => getCategories({ includeChildren: true, limit: 100 }),
 	});
 
 	// Create category mutation
@@ -425,11 +425,10 @@ const CategoriesPage = () => {
 		return categories.map((category) => (
 			<div key={category.id} className={`ml-${level * 3}`}>
 				<div
-					className={`group flex items-center gap-3 p-2 rounded-xl transition-all duration-200 cursor-pointer hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:shadow-sm ${
-						selectedCategory?.id === category.id
-							? 'bg-gradient-to-r from-blue-50 to-indigo-50 shadow-md border-l-4 border-blue-500'
-							: 'hover:shadow-sm'
-					}`}
+					className={`group flex items-center gap-3 p-2 rounded-xl transition-all duration-200 cursor-pointer hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:shadow-sm ${selectedCategory?.id === category.id
+						? 'bg-gradient-to-r from-blue-50 to-indigo-50 shadow-md border-l-4 border-blue-500'
+						: 'hover:shadow-sm'
+						}`}
 					onClick={() => setSelectedCategory(category)}
 				>
 					{category.children && category.children.length > 0 ? (
@@ -1207,11 +1206,10 @@ const CategoriesPage = () => {
 											<div className='flex items-center gap-3'>
 												<Badge
 													variant={selectedCategory.isActive ? 'default' : 'destructive'}
-													className={`${
-														selectedCategory.isActive
-															? 'bg-green-100 text-green-800 hover:bg-green-200'
-															: 'bg-red-100 text-red-800 hover:bg-red-200'
-													} px-4 py-2`}
+													className={`${selectedCategory.isActive
+														? 'bg-green-100 text-green-800 hover:bg-green-200'
+														: 'bg-red-100 text-red-800 hover:bg-red-200'
+														} px-4 py-2`}
 												>
 													{selectedCategory.isActive ? '🟢 Đang hoạt động' : '🔴 Tạm dừng'}
 												</Badge>
@@ -1334,60 +1332,60 @@ const CategoriesPage = () => {
 										{(selectedCategory.seoTitle ||
 											selectedCategory.seoDescription ||
 											selectedCategory.seoKeywords?.length) && (
-											<>
-												<Separator />
-												<Card className='border-0 shadow-sm bg-gradient-to-br from-purple-50/50 to-pink-50/30'>
-													<CardHeader>
-														<CardTitle className='flex items-center gap-2 text-lg'>
-															<Eye className='w-5 h-5 text-purple-600' />
-															Tối ưu SEO
-														</CardTitle>
-													</CardHeader>
-													<CardContent className='space-y-4'>
-														{selectedCategory.seoTitle && (
-															<div>
-																<Label className='text-sm font-medium text-gray-600'>
-																	Meta Title
-																</Label>
-																<p className='text-gray-800 mt-1 font-medium'>
-																	{selectedCategory.seoTitle}
-																</p>
-															</div>
-														)}
-														{selectedCategory.seoDescription && (
-															<div>
-																<Label className='text-sm font-medium text-gray-600'>
-																	Meta Description
-																</Label>
-																<p className='text-gray-800 mt-1 leading-relaxed'>
-																	{selectedCategory.seoDescription}
-																</p>
-															</div>
-														)}
-														{selectedCategory.seoKeywords?.length && (
-															<div>
-																<Label className='text-sm font-medium text-gray-600'>
-																	Keywords
-																</Label>
-																<div className='flex flex-wrap gap-2 mt-2'>
-																	{selectedCategory.seoKeywords.map(
-																		(keyword, index) => (
-																			<Badge
-																				key={index}
-																				variant='outline'
-																				className='bg-white border-purple-200 text-purple-700'
-																			>
-																				{keyword}
-																			</Badge>
-																		)
-																	)}
+												<>
+													<Separator />
+													<Card className='border-0 shadow-sm bg-gradient-to-br from-purple-50/50 to-pink-50/30'>
+														<CardHeader>
+															<CardTitle className='flex items-center gap-2 text-lg'>
+																<Eye className='w-5 h-5 text-purple-600' />
+																Tối ưu SEO
+															</CardTitle>
+														</CardHeader>
+														<CardContent className='space-y-4'>
+															{selectedCategory.seoTitle && (
+																<div>
+																	<Label className='text-sm font-medium text-gray-600'>
+																		Meta Title
+																	</Label>
+																	<p className='text-gray-800 mt-1 font-medium'>
+																		{selectedCategory.seoTitle}
+																	</p>
 																</div>
-															</div>
-														)}
-													</CardContent>
-												</Card>
-											</>
-										)}
+															)}
+															{selectedCategory.seoDescription && (
+																<div>
+																	<Label className='text-sm font-medium text-gray-600'>
+																		Meta Description
+																	</Label>
+																	<p className='text-gray-800 mt-1 leading-relaxed'>
+																		{selectedCategory.seoDescription}
+																	</p>
+																</div>
+															)}
+															{selectedCategory.seoKeywords?.length && (
+																<div>
+																	<Label className='text-sm font-medium text-gray-600'>
+																		Keywords
+																	</Label>
+																	<div className='flex flex-wrap gap-2 mt-2'>
+																		{selectedCategory.seoKeywords.map(
+																			(keyword, index) => (
+																				<Badge
+																					key={index}
+																					variant='outline'
+																					className='bg-white border-purple-200 text-purple-700'
+																				>
+																					{keyword}
+																				</Badge>
+																			)
+																		)}
+																	</div>
+																</div>
+															)}
+														</CardContent>
+													</Card>
+												</>
+											)}
 
 										{/* Timestamps */}
 										<Separator />
