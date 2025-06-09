@@ -92,6 +92,10 @@ export interface UpdateBannerResponse {
   message: string;
 }
 
+export interface DeleteBannerResponse {
+  message: string;
+}
+
 export interface GetBannersParams {
   page?: number;
   limit?: number;
@@ -166,6 +170,12 @@ export const getBanners = async (params?: GetBannersParams): Promise<GetBannersR
 // New function to update a banner
 export const updateBanner = async (id: string, data: UpdateBannerRequest): Promise<UpdateBannerResponse> => {
   const response = await api.patch(`/banners/${id}`, data);
+  return response.data;
+};
+
+// New function to delete a banner
+export const deleteBanner = async (id: string): Promise<DeleteBannerResponse> => {
+  const response = await api.delete(`/banners/${id}`);
   return response.data;
 };
 

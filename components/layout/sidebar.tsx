@@ -17,6 +17,7 @@ import {
 	LogOut,
 	ChevronUp,
 	File,
+	Images,
 } from 'lucide-react';
 import {
 	Sidebar,
@@ -60,19 +61,14 @@ const sidebarItems = [
 		icon: Users,
 	},
 	{
+		title: 'Banners',
+		href: '/admin/banner',
+		icon: Images,
+	},
+	{
 		title: 'Bài viết của tôi',
 		href: '/admin/my-post',
 		icon: File,
-	},
-	{
-		title: 'Thống kê',
-		href: '/admin/analytics',
-		icon: BarChart3,
-	},
-	{
-		title: 'Cài đặt',
-		href: '/admin/settings',
-		icon: Settings,
 	},
 ];
 
