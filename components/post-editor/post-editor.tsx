@@ -94,6 +94,7 @@ export function PostEditor({ post, onSave, onCancel, isUpdating }: PostEditorPro
 		resolver: zodResolver(postSchema),
 		defaultValues: {
 			title: '',
+			slug: '', // Add slug to default values
 			excerpt: '',
 			content: '',
 			featuredImage: '',
@@ -130,13 +131,14 @@ export function PostEditor({ post, onSave, onCancel, isUpdating }: PostEditorPro
 
 			const formData = {
 				title: post.title || '',
+				slug: post.slug || '', // Add slug to form data
 				excerpt: post.excerpt || '',
 				content: post.content || '',
 				featuredImage: post.featuredImage || '',
 				categoryId: categoryId,
 				tagIds: tagIds,
 				relatedProducts: post.relatedProducts || [],
-				status: post.status || 'draft', // Ensure status is set properly
+				status: post.status || 'draft',
 				isFeatured: post.isFeatured || false,
 				isSticky: post.isSticky || false,
 				seoTitle: post.seoTitle || '',
@@ -144,7 +146,7 @@ export function PostEditor({ post, onSave, onCancel, isUpdating }: PostEditorPro
 				seoKeywords: post.seoKeywords || [],
 			};
 
-			console.log('Setting form data:', formData); // Debug log
+			console.log('Setting form data:', formData);
 			reset(formData);
 
 			// Set selected tags for the TagsSection component

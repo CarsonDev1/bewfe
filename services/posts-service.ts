@@ -38,6 +38,7 @@ export interface Post {
 
 export interface CreatePostRequest {
 	title: string;
+	slug: string; // Make slug required for create request
 	excerpt?: string;
 	content: string;
 	featuredImage?: string;
@@ -53,9 +54,10 @@ export interface CreatePostRequest {
 	seoKeywords?: string[];
 }
 
-// Updated: Include relatedProducts in update request
+// Updated: Include slug and relatedProducts in update request
 export interface UpdatePostRequest {
 	title?: string;
+	slug: string; // Make slug required for update request
 	excerpt?: string;
 	content?: string;
 	featuredImage?: string;
@@ -184,6 +186,7 @@ export const preparePostData = (data: any): UpdatePostRequest | CreatePostReques
 	const cleanedData: any = {};
 
 	if (data.title !== undefined) cleanedData.title = data.title;
+	if (data.slug !== undefined) cleanedData.slug = data.slug; // Slug is required, so always include if provided
 	if (data.excerpt !== undefined && data.excerpt !== '') cleanedData.excerpt = data.excerpt;
 	if (data.content !== undefined) cleanedData.content = data.content;
 	if (data.featuredImage !== undefined && data.featuredImage !== '') cleanedData.featuredImage = data.featuredImage;
@@ -217,4 +220,13 @@ export const preparePostData = (data: any): UpdatePostRequest | CreatePostReques
 	}
 
 	return cleanedData;
+};
+
+// Optional: Helper function to generate slug from title
+export const generateSlug = (title: string): string => {
+	return title
+		.toLowerCase()
+		.trim()
+		.replace(/[\s\W-]+/g, '-') // Replace spaces and special characters with hyphens
+		.replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
 };
