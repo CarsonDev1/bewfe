@@ -18,7 +18,6 @@ export const postToFormData = (post?: Post): Partial<PostFormData> => {
 			status: 'draft',
 			isFeatured: false,
 			isSticky: false,
-			publishedAt: '',
 			seoTitle: '',
 			seoDescription: '',
 			seoKeywords: [],
@@ -32,13 +31,12 @@ export const postToFormData = (post?: Post): Partial<PostFormData> => {
 		featuredImage: post.featuredImage || '',
 		categoryId: typeof post.categoryId === 'object' ? post.categoryId?.id || '' : post.categoryId || '',
 		tagIds: Array.isArray(post.tagIds)
-			? post.tagIds.map((tag) => (typeof tag === 'string' ? tag : tag.id || tag))
+			? post.tagIds.map((tag: any) => (typeof tag === 'string' ? tag : tag.id || tag))
 			: [],
 		relatedProducts: post.relatedProducts || [],
 		status: post.status || 'draft',
 		isFeatured: post.isFeatured || false,
 		isSticky: post.isSticky || false,
-		publishedAt: post.publishedAt || '',
 		seoTitle: post.seoTitle || '',
 		seoDescription: post.seoDescription || '',
 		seoKeywords: post.seoKeywords || [],
@@ -60,8 +58,6 @@ export const formDataToPayload = (data: PostFormData, selectedTags: string[]) =>
 		status: data.status || 'draft',
 		isFeatured: data.isFeatured || false,
 		isSticky: data.isSticky || false,
-		publishedAt:
-			data.status === 'published' && !data.publishedAt ? new Date().toISOString() : data.publishedAt || undefined,
 		seoTitle: data.seoTitle || undefined,
 		seoDescription: data.seoDescription || undefined,
 		seoKeywords: data.seoKeywords && data.seoKeywords.length > 0 ? data.seoKeywords : undefined,
