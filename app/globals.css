@@ -80,6 +80,441 @@
 	}
 }
 
+/* TinyMCE Content Styles */
+.tinymce-content {
+  line-height: 1.6;
+  font-size: 16px;
+  color: #333;
+  word-wrap: break-word;
+}
+
+.tinymce-content img {
+  max-width: 100% !important;
+  height: auto !important;
+  display: block;
+  margin: 20px auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tinymce-content p {
+  margin-bottom: 16px;
+  line-height: 1.7;
+}
+
+.tinymce-content h1,
+.tinymce-content h2,
+.tinymce-content h3,
+.tinymce-content h4,
+.tinymce-content h5,
+.tinymce-content h6 {
+  margin-top: 32px;
+  margin-bottom: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.tinymce-content h1 { font-size: 2em; }
+.tinymce-content h2 { font-size: 1.5em; }
+.tinymce-content h3 { font-size: 1.25em; }
+
+.tinymce-content ul,
+.tinymce-content ol {
+  margin-bottom: 16px;
+  padding-left: 20px;
+}
+
+.tinymce-content li {
+  margin-bottom: 8px;
+}
+
+.tinymce-content blockquote {
+  margin: 20px 0;
+  padding: 16px 20px;
+  background-color: #f8f9fa;
+  border-left: 4px solid #007bff;
+  font-style: italic;
+}
+
+.tinymce-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+}
+
+.tinymce-content table th,
+.tinymce-content table td {
+  border: 1px solid #ddd;
+  padding: 12px;
+  text-align: left;
+}
+
+.tinymce-content table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+
+/* Fix cho Next.js Image optimization conflicts */
+.tinymce-content img[src*="103.237.86.37"] {
+  object-fit: contain;
+  background-color: #f8f9fa;
+}
+
+/* Đảm bảo images không bị ảnh hưởng bởi Tailwind reset */
+.tinymce-content img {
+  vertical-align: middle;
+  border-style: none;
+}
+
+/* styles/tinymce-client.css */
+.tinymce-content {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tinymce-content h1,
+.tinymce-content h2,
+.tinymce-content h3,
+.tinymce-content h4,
+.tinymce-content h5,
+.tinymce-content h6 {
+  color: #2d3748;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  font-weight: 600;
+}
+
+.tinymce-content h1 { font-size: 2.25em; }
+.tinymce-content h2 { font-size: 1.875em; }
+.tinymce-content h3 { font-size: 1.5em; }
+.tinymce-content h4 { font-size: 1.25em; }
+.tinymce-content h5 { font-size: 1.125em; }
+.tinymce-content h6 { font-size: 1em; }
+
+.tinymce-content p {
+  margin: 0 0 1em 0;
+  padding: 0;
+}
+
+.tinymce-content a {
+  color: #3182ce;
+  text-decoration: none;
+}
+
+.tinymce-content a:hover {
+  text-decoration: underline;
+}
+
+.tinymce-content blockquote {
+  border-left: 4px solid #e2e8f0;
+  margin: 1.5em 0;
+  padding-left: 1.5em;
+  color: #718096;
+  font-style: italic;
+}
+
+.tinymce-content code {
+  background: #f7fafc;
+  padding: 0.25em 0.5em;
+  border-radius: 4px;
+  font-size: 0.875em;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.tinymce-content pre {
+  background: #1a202c;
+  color: #e2e8f0;
+  padding: 1.5em;
+  border-radius: 8px;
+  overflow-x: auto;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  line-height: 1.5;
+}
+
+.tinymce-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.5em 0;
+  border: 1px solid #e2e8f0;
+}
+
+.tinymce-content th,
+.tinymce-content td {
+  border: 1px solid #e2e8f0;
+  padding: 12px;
+  text-align: left;
+}
+
+.tinymce-content th {
+  background: #f7fafc;
+  font-weight: 600;
+}
+
+.tinymce-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.tinymce-content ul,
+.tinymce-content ol {
+  margin: 0 0 1em 0;
+  padding: 0 0 0 2em;
+  list-style-position: outside;
+}
+
+.tinymce-content ul {
+  list-style-type: disc;
+}
+
+.tinymce-content ol {
+  list-style-type: decimal;
+}
+
+.tinymce-content ul ul {
+  list-style-type: circle;
+  margin: 0 0 0 0;
+  padding-left: 1.5em;
+}
+
+.tinymce-content ul ul ul {
+  list-style-type: square;
+}
+
+.tinymce-content ol ol {
+  margin: 0 0 0 0;
+  padding-left: 1.5em;
+}
+
+.tinymce-content li {
+  margin: 0 0 0.3em 0;
+  padding: 0;
+  display: list-item;
+}
+
+/* Fix for nested lists */
+.tinymce-content li > ul,
+.tinymce-content li > ol {
+  margin-top: 0.3em;
+  margin-bottom: 0;
+}
+
+/* Ensure proper spacing between list items and paragraphs */
+.tinymce-content li p {
+  margin: 0 0 0.3em 0;
+}
+
+.tinymce-content li p:last-child {
+  margin-bottom: 0;
+}
+
+/* Additional spacing and formatting - exact TinyMCE match */
+.tinymce-content > *:first-child {
+  margin-top: 0 !important;
+}
+
+.tinymce-content > *:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* Preserve exact spacing like TinyMCE */
+.tinymce-content br {
+  line-height: 1.6;
+}
+
+/* Exact paragraph spacing */
+.tinymce-content p + p {
+  margin-top: 0;
+}
+
+.tinymce-content p + ul,
+.tinymce-content p + ol {
+  margin-top: 0;
+}
+
+.tinymce-content ul + p,
+.tinymce-content ol + p {
+  margin-top: 1em;
+}
+
+/* Style for div elements */
+.tinymce-content div {
+  margin: 0;
+  padding: 0;
+}
+
+/* Remove default margins from nested elements */
+.tinymce-content div p:last-child {
+  margin-bottom: 0;
+}
+
+/* Exact TinyMCE spacing for block elements */
+.tinymce-content blockquote,
+.tinymce-content table,
+.tinymce-content pre {
+  margin: 1em 0;
+}
+
+.tinymce-content blockquote:first-child,
+.tinymce-content table:first-child,
+.tinymce-content pre:first-child {
+  margin-top: 0;
+}
+
+.tinymce-content blockquote:last-child,
+.tinymce-content table:last-child,
+.tinymce-content pre:last-child {
+  margin-bottom: 0;
+}
+
+/* Handle text alignment */
+.tinymce-content .text-left { text-align: left; }
+.tinymce-content .text-center { text-align: center; }
+.tinymce-content .text-right { text-align: right; }
+.tinymce-content .text-justify { text-align: justify; }
+
+/* Handle font styling */
+.tinymce-content strong,
+.tinymce-content b {
+  font-weight: bold;
+}
+
+.tinymce-content em,
+.tinymce-content i {
+  font-style: italic;
+}
+
+.tinymce-content u {
+  text-decoration: underline;
+}
+
+.tinymce-content s,
+.tinymce-content strike {
+  text-decoration: line-through;
+}
+
+/* Handle font sizes */
+.tinymce-content .text-xs { font-size: 0.75rem; }
+.tinymce-content .text-sm { font-size: 0.875rem; }
+.tinymce-content .text-base { font-size: 1rem; }
+.tinymce-content .text-lg { font-size: 1.125rem; }
+.tinymce-content .text-xl { font-size: 1.25rem; }
+.tinymce-content .text-2xl { font-size: 1.5rem; }
+.tinymce-content .text-3xl { font-size: 1.875rem; }
+
+/* Handle colors */
+.tinymce-content .text-red { color: #dc2626; }
+.tinymce-content .text-blue { color: #2563eb; }
+.tinymce-content .text-green { color: #16a34a; }
+.tinymce-content .text-yellow { color: #ca8a04; }
+.tinymce-content .text-purple { color: #9333ea; }
+.tinymce-content .text-gray { color: #6b7280; }
+
+/* Handle background colors */
+.tinymce-content .bg-yellow { background-color: #fef3c7; }
+.tinymce-content .bg-green { background-color: #d1fae5; }
+.tinymce-content .bg-blue { background-color: #dbeafe; }
+.tinymce-content .bg-red { background-color: #fee2e2; }
+.tinymce-content .bg-gray { background-color: #f3f4f6; }
+
+/* Remove whitespace pre-wrap that was causing issues */
+.tinymce-content {
+  white-space: normal;
+}
+
+/* Preserve only necessary whitespace */
+.tinymce-content pre {
+  white-space: pre-wrap;
+}
+
+/* Override any Tailwind reset that might affect lists */
+.tinymce-content ul,
+.tinymce-content ol {
+  list-style: revert !important;
+}
+
+.tinymce-content ul {
+  list-style-type: disc !important;
+}
+
+.tinymce-content ol {
+  list-style-type: decimal !important;
+}
+
+.tinymce-content li {
+  display: list-item !important;
+}
+
+/* Ensure proper indentation matches TinyMCE exactly */
+.tinymce-content ul ul,
+.tinymce-content ol ul {
+  list-style-type: circle !important;
+}
+
+.tinymce-content ul ul ul,
+.tinymce-content ol ul ul,
+.tinymce-content ul ol ul,
+.tinymce-content ol ol ul {
+  list-style-type: square !important;
+}
+
+.tinymce-content ol ol,
+.tinymce-content ul ol {
+  list-style-type: lower-alpha !important;
+}
+
+.tinymce-content ol ol ol,
+.tinymce-content ul ol ol,
+.tinymce-content ol ul ol,
+.tinymce-content ul ul ol {
+  list-style-type: lower-roman !important;
+}
+
+/* Handle TinyMCE specific classes */
+.tinymce-content .mce-content-body {
+  font-family: inherit;
+}
+
+/* Handle TinyMCE table styles */
+.tinymce-content table[style*="border-collapse: collapse"] {
+  border-collapse: collapse !important;
+}
+
+.tinymce-content table[style*="width: 100%"] {
+  width: 100% !important;
+}
+
+/* Override any conflicting Tailwind styles */
+.tinymce-content table {
+  margin: 1.5em 0 !important;
+  border-spacing: 0 !important;
+}
+
+.tinymce-content th,
+.tinymce-content td {
+  border: 1px solid #e2e8f0 !important;
+  padding: 12px !important;
+}
+
+/* Responsive table */
+@media (max-width: 768px) {
+  .tinymce-content table {
+    font-size: 0.875rem;
+  }
+  
+  .tinymce-content th,
+  .tinymce-content td {
+    padding: 8px !important;
+  }
+}
+
+
 @layer base {
 	* {
 		@apply border-border;
