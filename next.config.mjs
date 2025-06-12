@@ -4,7 +4,7 @@ const nextConfig = {
 		domains: [
 			'res.cloudinary.com',
 			'beta-api.bachlongmobile.com',
-			'103.237.86.37'
+			'https://be.rongvang.online'
 		],
 	},
 };

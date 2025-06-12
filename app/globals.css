@@ -155,7 +155,7 @@
 }
 
 /* Fix cho Next.js Image optimization conflicts */
-.tinymce-content img[src*="103.237.86.37"] {
+.tinymce-content img[src*="https://be.rongvang.online"] {
   object-fit: contain;
   background-color: #f8f9fa;
 }
