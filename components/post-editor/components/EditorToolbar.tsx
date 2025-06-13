@@ -2,9 +2,9 @@
 
 import React from 'react';
 import { FileText, Plus, Eye, EyeOff, Maximize, Minimize } from 'lucide-react';
-import { getCurrentFontSize } from '../extensions/FontSizeExtension';
+import { ToolbarButton, ToolbarSelect, ToolbarDropdown, ColorPicker } from '@/components/post-editor/components/ToolbarComponent';
 import { EditorToolbarProps } from '@/types/EditorTypes';
-import { ColorPicker, ToolbarButton, ToolbarDropdown, ToolbarSelect } from '@/components/post-editor/components/ToolbarComponent';
+import { getCurrentFontSize } from '../extensions/FontSizeExtension';
 
 export const EditorToolbar: React.FC<EditorToolbarProps> = ({
   editor,
@@ -45,37 +45,67 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         <ToolbarDropdown label="File" icon={<FileText className="w-3 h-3" />}>
           <div className="p-1">
             <button
-              onClick={() => editor.commands.clearContent()}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                editor.commands.clearContent();
+              }}
               className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded"
             >
               🗎 New Document
             </button>
             <button
-              onClick={onExportHTML}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onExportHTML();
+              }}
               className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded"
             >
               💾 Export HTML
             </button>
             <button
-              onClick={onExportMarkdown}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onExportMarkdown();
+              }}
               className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded"
             >
               📝 Export Markdown
             </button>
             <button
-              onClick={onExportWord}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onExportWord();
+              }}
               className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded"
             >
               📄 Export Word
             </button>
             <button
-              onClick={onExportPDF}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onExportPDF();
+              }}
               className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded"
             >
               📑 Export PDF
             </button>
             <button
-              onClick={onPrint}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onPrint();
+              }}
               className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded"
             >
               🖨️ Print
@@ -86,12 +116,20 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
               <input
                 type="file"
                 accept=".html,.txt,.md"
-                onChange={onImportFile}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  onImportFile(e);
+                }}
                 className="hidden"
               />
             </label>
             <button
-              onClick={onCopyToClipboard}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onCopyToClipboard();
+              }}
               className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded"
             >
               📋 Copy HTML
@@ -102,14 +140,24 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         <ToolbarDropdown label="Edit" icon={<span>✏️</span>}>
           <div className="p-1">
             <button
-              onClick={() => editor.chain().focus().undo().run()}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                editor.chain().focus().undo().run();
+              }}
               disabled={!editor.can().undo()}
               className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded disabled:opacity-50"
             >
               ↶ Undo (Ctrl+Z)
             </button>
             <button
-              onClick={() => editor.chain().focus().redo().run()}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                editor.chain().focus().redo().run();
+              }}
               disabled={!editor.can().redo()}
               className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded disabled:opacity-50"
             >
@@ -117,26 +165,46 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
             </button>
             <hr className="my-1" />
             <button
-              onClick={onSelectAll}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onSelectAll();
+              }}
               className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded"
             >
               📄 Select All (Ctrl+A)
             </button>
             <button
-              onClick={onCopyToClipboard}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onCopyToClipboard();
+              }}
               className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded"
             >
               📋 Copy (Ctrl+C)
             </button>
             <button
-              onClick={onPasteFromClipboard}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onPasteFromClipboard();
+              }}
               className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded"
             >
               📄 Paste (Ctrl+V)
             </button>
             <hr className="my-1" />
             <button
-              onClick={onSearchToggle}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onSearchToggle();
+              }}
               className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded"
             >
               🔍 Find & Replace (Ctrl+F)
@@ -147,14 +215,24 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         <ToolbarDropdown label="View" icon={<Eye className="w-3 h-3" />}>
           <div className="p-1">
             <button
-              onClick={onPreviewToggle}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onPreviewToggle();
+              }}
               className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded"
             >
               {isPreviewMode ? <EyeOff className="w-4 h-4 inline mr-2" /> : <Eye className="w-4 h-4 inline mr-2" />}
               {isPreviewMode ? 'Edit Mode' : 'Preview Mode'}
             </button>
             <button
-              onClick={() => {/* Toggle fullscreen logic */ }}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                /* Toggle fullscreen logic */
+              }}
               className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded"
             >
               {isFullScreen ? <Minimize className="w-4 h-4 inline mr-2" /> : <Maximize className="w-4 h-4 inline mr-2" />}
@@ -192,39 +270,69 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
               📊 Table
             </button>
             <button
-              onClick={onAddLink}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onAddLink();
+              }}
               className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded"
             >
               🔗 Link
             </button>
             <hr className="my-1" />
             <button
-              onClick={() => editor.chain().focus().setHorizontalRule().run()}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                editor.chain().focus().setHorizontalRule().run();
+              }}
               className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded"
             >
               ➖ Horizontal Rule
             </button>
             <button
-              onClick={onInsertDateTime}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onInsertDateTime();
+              }}
               className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded"
             >
               📅 Date/Time
             </button>
             <button
-              onClick={onInsertPageBreak}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onInsertPageBreak();
+              }}
               className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded"
             >
               📄 Page Break
             </button>
             <hr className="my-1" />
             <button
-              onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                editor.chain().focus().toggleCodeBlock().run();
+              }}
               className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded"
             >
               💻 Code Block
             </button>
             <button
-              onClick={() => editor.chain().focus().toggleBlockquote().run()}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                editor.chain().focus().toggleBlockquote().run();
+              }}
               className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded"
             >
               💬 Blockquote
@@ -235,32 +343,57 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         <ToolbarDropdown label="Format" icon={<span>🎨</span>}>
           <div className="p-1">
             <button
-              onClick={onClearFormatting}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onClearFormatting();
+              }}
               className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded"
             >
               🧹 Clear Formatting
             </button>
             <hr className="my-1" />
             <button
-              onClick={() => editor.chain().focus().toggleBold().run()}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                editor.chain().focus().toggleBold().run();
+              }}
               className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded"
             >
               <strong>Bold (Ctrl+B)</strong>
             </button>
             <button
-              onClick={() => editor.chain().focus().toggleItalic().run()}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                editor.chain().focus().toggleItalic().run();
+              }}
               className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded"
             >
               <em>Italic (Ctrl+I)</em>
             </button>
             <button
-              onClick={() => editor.chain().focus().toggleUnderline().run()}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                editor.chain().focus().toggleUnderline().run();
+              }}
               className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded"
             >
               <u>Underline (Ctrl+U)</u>
             </button>
             <button
-              onClick={() => editor.chain().focus().toggleStrike().run()}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                editor.chain().focus().toggleStrike().run();
+              }}
               className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded"
             >
               <s>Strikethrough</s>
@@ -275,7 +408,12 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
               {['©', '®', '™', '§', '¶', '†', '‡', '•', '…', '‰', '‹', '›', '«', '»', '–', '—', '"', '"', "'", "'", '€', '£', '¥', '¢'].map(symbol => (
                 <button
                   key={symbol}
-                  onClick={() => onInsertSymbol(symbol)}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onInsertSymbol(symbol);
+                  }}
                   className="p-2 text-sm hover:bg-gray-100 rounded text-center transition-colors"
                   title={`Insert ${symbol}`}
                 >
@@ -288,7 +426,12 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
               {['±', '×', '÷', '∞', '≠', '≤', '≥', '∑', '∏', '√', '∂', '∫', 'α', 'β', 'γ', 'δ', 'π', 'Ω'].map(symbol => (
                 <button
                   key={symbol}
-                  onClick={() => onInsertSymbol(symbol)}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onInsertSymbol(symbol);
+                  }}
                   className="p-2 text-sm hover:bg-gray-100 rounded text-center transition-colors"
                   title={`Insert ${symbol}`}
                 >
@@ -307,18 +450,31 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
             type="text"
             placeholder="Search text..."
             value={searchTerm}
-            onChange={(e) => onSearchTermChange(e.target.value)}
+            onChange={(e) => {
+              e.stopPropagation();
+              onSearchTermChange(e.target.value);
+            }}
             className="px-3 py-1 border border-gray-300 rounded text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
             autoFocus
           />
           <button
-            onClick={onSearchAndReplace}
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onSearchAndReplace();
+            }}
             className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 transition-colors"
           >
             Replace
           </button>
           <button
-            onClick={onSearchToggle}
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onSearchToggle();
+            }}
             className="px-2 py-1 text-gray-500 hover:text-gray-700 rounded hover:bg-gray-200 transition-colors"
           >
             ✕
@@ -331,7 +487,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         {/* Font Family */}
         <ToolbarSelect
           value={editor.getAttributes('textStyle').fontFamily || ''}
-          onChange={(font: string) => {
+          onChange={(font) => {
             if (font) {
               editor.chain().focus().setFontFamily(font).run();
             } else {
@@ -357,7 +513,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         {/* Font Size with current size display */}
         <ToolbarSelect
           value={getCurrentFontSize(editor)}
-          onChange={(size: string) => {
+          onChange={(size) => {
             if (size) {
               // If it's a heading, we need to handle it differently
               if (editor.isActive('heading')) {
@@ -405,7 +561,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
                       editor.isActive('heading', { level: 6 }) ? 'h6' :
                         'p'
           }
-          onChange={(value: string) => {
+          onChange={(value) => {
             if (value === 'p') {
               editor.chain().focus().setParagraph().run();
             } else {
@@ -426,7 +582,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
             { value: 'h1', label: 'Heading 1 (40px)' },
             { value: 'h2', label: 'Heading 2 (32px)' },
             { value: 'h3', label: 'Heading 3 (28px)' },
-            { value: 'h4', label: 'Heading 4 (20px)' },
+            { value: 'h4', label: 'Heading 4 (24px)' },
             { value: 'h5', label: 'Heading 5 (20px)' },
             { value: 'h6', label: 'Heading 6 (18px)' },
           ]}
@@ -458,6 +614,13 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
             <u>U</u>
           </ToolbarButton>
           <ToolbarButton
+            onClick={() => editor.chain().focus().toggleStrike().run()}
+            isActive={editor.isActive('strike')}
+            title="Strikethrough"
+          >
+            <s>S</s>
+          </ToolbarButton>
+          <ToolbarButton
             onClick={() => editor.chain().focus().toggleSubscript().run()}
             isActive={editor.isActive('subscript')}
             title="Subscript"
@@ -482,7 +645,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         >
           <ColorPicker
             currentColor={editor.getAttributes('textStyle').color || '#000000'}
-            onColorSelect={(color: string) => {
+            onColorSelect={(color) => {
               if (color) {
                 editor.chain().focus().setColor(color).run();
               } else {
@@ -499,7 +662,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         >
           <ColorPicker
             currentColor={editor.getAttributes('highlight').color || '#ffff00'}
-            onColorSelect={(color: string) => {
+            onColorSelect={(color) => {
               if (color) {
                 editor.chain().focus().toggleHighlight({ color }).run();
               } else {
@@ -595,19 +758,12 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
           🔗 Link
         </ToolbarButton>
         <ToolbarButton
-          onClick={() => {
-            onImageUpload();
-          }}
+          onClick={onImageUpload}
           title="Insert Image"
         >
           🖼️ Image
         </ToolbarButton>
-        <ToolbarButton
-          onClick={() => {
-            onInsertTable();
-          }}
-          title="Insert Table"
-        >
+        <ToolbarButton onClick={onInsertTable} title="Insert Table">
           📊 Table
         </ToolbarButton>
         <ToolbarButton
@@ -636,7 +792,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         {/* Templates */}
         <ToolbarSelect
           value=""
-          onChange={(value: string) => {
+          onChange={(value) => {
             if (value) onInsertTemplate(value);
           }}
           placeholder="Templates"
@@ -656,7 +812,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         {editor.isActive('codeBlock') && (
           <ToolbarSelect
             value={editor.getAttributes('codeBlock').language || 'javascript'}
-            onChange={(language: string) => {
+            onChange={(language) => {
               editor.chain().focus().updateAttributes('codeBlock', { language }).run();
             }}
             placeholder="Language"

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { ToolbarButtonProps, ToolbarSelectProps, ToolbarDropdownProps, ColorPickerProps } from '../../../types/EditorTypes';
+import { ToolbarButtonProps, ToolbarSelectProps, ToolbarDropdownProps, ColorPickerProps } from '@/types/EditorTypes';
 
 // Toolbar Button Component
 export const ToolbarButton: React.FC<ToolbarButtonProps> = ({
@@ -11,24 +11,34 @@ export const ToolbarButton: React.FC<ToolbarButtonProps> = ({
   title,
   size = 'sm',
   variant = 'default'
-}) => (
-  <button
-    type="button"
-    onClick={onClick}
-    disabled={disabled}
-    title={title}
-    className={`${size === 'sm' ? 'p-1.5 text-xs' : 'p-2 text-sm'} rounded border font-medium transition-all duration-200 ${isActive
-      ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-      : variant === 'primary'
-        ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
-        : variant === 'danger'
-          ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
-          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
-      } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-  >
-    {children}
-  </button>
-);
+}) => {
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!disabled) {
+      onClick();
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={disabled}
+      title={title}
+      className={`${size === 'sm' ? 'p-1.5 text-xs' : 'p-2 text-sm'} rounded border font-medium transition-all duration-200 ${isActive
+        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+        : variant === 'primary'
+          ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
+          : variant === 'danger'
+            ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+        } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+    >
+      {children}
+    </button>
+  );
+};
 
 // Toolbar Select Component
 export const ToolbarSelect: React.FC<ToolbarSelectProps> = ({
@@ -38,21 +48,29 @@ export const ToolbarSelect: React.FC<ToolbarSelectProps> = ({
   disabled = false,
   placeholder = 'Select...',
   width = 'min-w-[100px]'
-}) => (
-  <select
-    value={value}
-    onChange={(e) => onChange(e.target.value)}
-    disabled={disabled}
-    className={`px-2 py-1.5 border border-gray-300 rounded text-xs bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${width}`}
-  >
-    <option value="">{placeholder}</option>
-    {options.map((option: { value: string; label: string }) => (
-      <option key={option.value} value={option.value}>
-        {option.label}
-      </option>
-    ))}
-  </select>
-);
+}) => {
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onChange(e.target.value);
+  };
+
+  return (
+    <select
+      value={value}
+      onChange={handleChange}
+      disabled={disabled}
+      className={`px-2 py-1.5 border border-gray-300 rounded text-xs bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${width}`}
+    >
+      <option value="">{placeholder}</option>
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  );
+};
 
 // Dropdown Component for More Options
 export const ToolbarDropdown: React.FC<ToolbarDropdownProps> = ({
@@ -75,11 +93,22 @@ export const ToolbarDropdown: React.FC<ToolbarDropdownProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const handleToggle = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsOpen(!isOpen);
+  };
+
+  const handleChildClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Allow child clicks but prevent form submission
+    e.stopPropagation();
+  };
+
   return (
     <div className="relative" ref={dropdownRef}>
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleToggle}
         className="flex items-center gap-1 px-2 py-1.5 text-xs border border-gray-300 rounded bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-colors"
       >
         {icon}
@@ -87,8 +116,11 @@ export const ToolbarDropdown: React.FC<ToolbarDropdownProps> = ({
         <ChevronDown className="w-3 h-3" />
       </button>
       {isOpen && (
-        <div className={`absolute top-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-50 min-w-[200px] max-h-80 overflow-y-auto ${align === 'right' ? 'right-0' : 'left-0'
-          }`}>
+        <div
+          className={`absolute top-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-50 min-w-[200px] max-h-80 overflow-y-auto ${align === 'right' ? 'right-0' : 'left-0'
+            }`}
+          onClick={handleChildClick}
+        >
           {children}
         </div>
       )}
@@ -112,6 +144,24 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
     '#5b0f00', '#660000', '#783f04', '#7f6000', '#274e13', '#0c343d', '#1c4587', '#073763', '#20124d', '#4c1130'
   ];
 
+  const handleColorClick = (e: React.MouseEvent<HTMLButtonElement>, color: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onColorSelect(color);
+  };
+
+  const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onColorSelect(e.target.value);
+  };
+
+  const handleRemoveColor = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onColorSelect('');
+  };
+
   return (
     <div className="p-3">
       <div className="grid grid-cols-10 gap-1 mb-3">
@@ -119,7 +169,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
           <button
             key={color}
             type="button"
-            onClick={() => onColorSelect(color)}
+            onClick={(e) => handleColorClick(e, color)}
             className={`w-6 h-6 rounded border-2 hover:scale-110 transition-transform ${currentColor === color ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-300'
               }`}
             style={{ backgroundColor: color }}
@@ -131,11 +181,12 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
         <input
           type="color"
           value={currentColor}
-          onChange={(e) => onColorSelect(e.target.value)}
+          onChange={handleColorChange}
           className="w-full h-8 rounded border border-gray-300 cursor-pointer"
         />
         <button
-          onClick={() => onColorSelect('')}
+          type="button"
+          onClick={handleRemoveColor}
           className="w-full px-3 py-2 text-xs bg-gray-100 hover:bg-gray-200 rounded border border-gray-300 transition-colors"
         >
           Remove Color
