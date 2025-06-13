@@ -1,35 +1,341 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Image from '@tiptap/extension-image';
+import Link from '@tiptap/extension-link';
+import Table from '@tiptap/extension-table';
+import TableRow from '@tiptap/extension-table-row';
+import TableHeader from '@tiptap/extension-table-header';
+import TableCell from '@tiptap/extension-table-cell';
+import TextAlign from '@tiptap/extension-text-align';
+import Underline from '@tiptap/extension-underline';
+import Subscript from '@tiptap/extension-subscript';
+import Superscript from '@tiptap/extension-superscript';
+import Highlight from '@tiptap/extension-highlight';
+import TaskList from '@tiptap/extension-task-list';
+import TaskItem from '@tiptap/extension-task-item';
+import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
+import { Color } from '@tiptap/extension-color';
+import TextStyle from '@tiptap/extension-text-style';
+import FontFamily from '@tiptap/extension-font-family';
+import HorizontalRule from '@tiptap/extension-horizontal-rule';
+import CharacterCount from '@tiptap/extension-character-count';
+import Document from '@tiptap/extension-document';
+import Paragraph from '@tiptap/extension-paragraph';
+import Text from '@tiptap/extension-text';
+import { createLowlight } from 'lowlight';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
 
-interface EditorWrapperProps {
-	value: string;
-	onChange: (content: string) => void;
-	isFullScreen: boolean;
-	uploadImage: (file: File) => Promise<any>;
-}
+// Import custom components and utilities
+import { EditorToolbar } from './EditorToolbar';
+import { LinkDialog } from './LinkDialog';
+import { FontSize, getCurrentFontSize } from '../extensions/FontSizeExtension';
+import { Autolink } from '../extensions/AutolinkExtension';
+import { EditorWrapperProps } from '../../../types/EditorTypes';
+import {
+	exportToHTML,
+	exportToMarkdown,
+	exportToWord,
+	exportToPDF,
+	printDocument,
+	importFromFile,
+	getTemplate,
+	insertSymbol,
+	insertDateTime,
+	insertPageBreak,
+	insertTable,
+	addLink,
+	clearFormatting,
+	selectAll,
+	copyToClipboard,
+	pasteFromClipboard,
+	searchAndReplace
+} from '../../../utils/EditorUtils';
 
-export const EditorWrapper = ({ value, onChange, isFullScreen, uploadImage }: EditorWrapperProps) => {
+// Import languages for code highlighting
+import javascript from 'highlight.js/lib/languages/javascript';
+import typescript from 'highlight.js/lib/languages/typescript';
+import html from 'highlight.js/lib/languages/xml';
+import css from 'highlight.js/lib/languages/css';
+import python from 'highlight.js/lib/languages/python';
+import java from 'highlight.js/lib/languages/java';
+import php from 'highlight.js/lib/languages/php';
+import ruby from 'highlight.js/lib/languages/ruby';
+import cpp from 'highlight.js/lib/languages/cpp';
+import csharp from 'highlight.js/lib/languages/csharp';
+import json from 'highlight.js/lib/languages/json';
+import sql from 'highlight.js/lib/languages/sql';
+import go from 'highlight.js/lib/languages/go';
+import rust from 'highlight.js/lib/languages/rust';
+import kotlin from 'highlight.js/lib/languages/kotlin';
+
+const lowlight = createLowlight();
+lowlight.register('javascript', javascript);
+lowlight.register('typescript', typescript);
+lowlight.register('html', html);
+lowlight.register('css', css);
+lowlight.register('python', python);
+lowlight.register('java', java);
+lowlight.register('php', php);
+lowlight.register('ruby', ruby);
+lowlight.register('cpp', cpp);
+lowlight.register('csharp', csharp);
+lowlight.register('json', json);
+lowlight.register('sql', sql);
+lowlight.register('go', go);
+lowlight.register('rust', rust);
+lowlight.register('kotlin', kotlin);
+
+export const EditorWrapper: React.FC<EditorWrapperProps> = ({
+	value,
+	onChange,
+	isFullScreen,
+	uploadImage
+}) => {
 	const [mounted, setMounted] = useState(false);
-	const [Editor, setEditor] = useState<any>(null);
-	const editorRef = useRef<any>(null);
+	const [showSearch, setShowSearch] = useState(false);
+	const [searchTerm, setSearchTerm] = useState('');
+	const [isPreviewMode, setIsPreviewMode] = useState(false);
+	const [wordCount, setWordCount] = useState(0);
+	const [showLinkDialog, setShowLinkDialog] = useState(false);
+	const [linkData, setLinkData] = useState({ url: '', text: '', target: '_blank' as '_blank' | '_self' });
+	const fileInputRef = useRef<HTMLInputElement>(null);
+
+	const editor = useEditor({
+		extensions: [
+			Document,
+			Paragraph,
+			Text,
+			StarterKit.configure({
+				document: false,
+				paragraph: false,
+				text: false,
+				codeBlock: false,
+			}),
+			Image.configure({
+				inline: true,
+				allowBase64: true,
+				HTMLAttributes: {
+					class: 'editor-image',
+				},
+			}),
+			Link.configure({
+				openOnClick: true, // Enable click to open links
+				linkOnPaste: true, // Auto-detect links when pasting
+				autolink: true, // Auto-detect typed URLs
+				HTMLAttributes: {
+					class: 'editor-link',
+					rel: 'noopener noreferrer',
+				},
+				protocols: ['http', 'https', 'mailto', 'tel'],
+				validate: href => /^https?:\/\//.test(href) || /^mailto:/.test(href) || /^tel:/.test(href) || /^\//.test(href),
+			}),
+			Table.configure({
+				resizable: true,
+				handleWidth: 5,
+				cellMinWidth: 25,
+			}),
+			TableRow,
+			TableHeader,
+			TableCell,
+			TextAlign.configure({
+				types: ['heading', 'paragraph'],
+				alignments: ['left', 'center', 'right', 'justify'],
+			}),
+			Underline,
+			Subscript,
+			Superscript,
+			Highlight.configure({
+				multicolor: true,
+			}),
+			TaskList,
+			TaskItem.configure({
+				nested: true,
+				HTMLAttributes: {
+					class: 'task-item',
+				},
+			}),
+			CodeBlockLowlight.configure({
+				lowlight,
+				defaultLanguage: 'javascript',
+			}),
+			Color.configure({
+				types: ['textStyle'],
+			}),
+			TextStyle,
+			FontFamily.configure({
+				types: ['textStyle'],
+			}),
+			FontSize.configure({
+				types: ['textStyle'],
+			}),
+			HorizontalRule.configure({
+				HTMLAttributes: {
+					class: 'hr-divider',
+				},
+			}),
+			CharacterCount.configure({
+				limit: 100000,
+			}),
+			Autolink,
+		],
+		content: value,
+		onUpdate: ({ editor }) => {
+			const html = editor.getHTML();
+			onChange(html);
+			setWordCount(editor.storage.characterCount?.words() || 0);
+		},
+		editorProps: {
+			attributes: {
+				class: `prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none ${isFullScreen ? 'min-h-[80vh]' : 'min-h-[500px]'
+					}`,
+				style: `
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          font-size: 14px;
+          line-height: 1.6;
+          color: #333;
+          padding: 2rem;
+        `,
+			},
+		},
+	});
 
 	useEffect(() => {
-		const loadEditor = async () => {
-			try {
-				const tinymce = await import('@tinymce/tinymce-react');
-				setEditor(() => tinymce.Editor);
-				setMounted(true);
-			} catch (error) {
-				console.error('Failed to load TinyMCE:', error);
-				setMounted(true);
+		setMounted(true);
+	}, []);
+
+	useEffect(() => {
+		if (editor && value !== editor.getHTML()) {
+			editor.commands.setContent(value, false);
+		}
+	}, [value, editor]);
+
+	const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+		const file = event.target.files?.[0];
+		if (!file || !editor) return;
+
+		try {
+			const response = await uploadImage(file);
+			if (response.url) {
+				editor.chain().focus().setImage({ src: response.url }).run();
 			}
+		} catch (error) {
+			console.error('Error uploading image:', error);
+		}
+
+		if (fileInputRef.current) {
+			fileInputRef.current.value = '';
+		}
+	};
+
+	// Handler functions
+	const handleSearchToggle = () => setShowSearch(!showSearch);
+	const handleSearchTermChange = (term: string) => setSearchTerm(term);
+	const handlePreviewToggle = () => setIsPreviewMode(!isPreviewMode);
+	const handleImageUploadClick = () => fileInputRef.current?.click();
+
+	const handleExportHTML = () => exportToHTML(editor);
+	const handleExportMarkdown = () => exportToMarkdown(editor);
+	const handleExportWord = () => exportToWord(editor);
+	const handleExportPDF = () => exportToPDF(editor);
+	const handlePrint = () => printDocument(editor);
+	const handleImportFile = importFromFile(editor);
+	const handleCopyToClipboard = () => copyToClipboard(editor);
+	const handlePasteFromClipboard = () => pasteFromClipboard(editor);
+
+	const handleInsertTemplate = (type: string) => {
+		const template = getTemplate(type);
+		if (template && editor) {
+			editor.chain().focus().setContent(template).run();
+		}
+	};
+
+	const handleInsertTable = () => insertTable(editor);
+	const handleInsertSymbol = (symbol: string) => insertSymbol(editor, symbol);
+	const handleInsertDateTime = () => insertDateTime(editor);
+	const handleInsertPageBreak = () => insertPageBreak(editor);
+	// Enhanced Link Handler
+	const handleAddLink = () => {
+		const previousUrl = editor?.getAttributes('link').href || '';
+		const selectedText = editor?.state.doc.textBetween(
+			editor?.state.selection.from,
+			editor?.state.selection.to,
+			''
+		) || '';
+		const previousTarget = editor?.getAttributes('link').target || '_blank';
+
+		setLinkData({
+			url: previousUrl,
+			text: selectedText,
+			target: previousTarget
+		});
+		setShowLinkDialog(true);
+	};
+
+	const handleSaveLink = (url: string, text: string, target: '_blank' | '_self') => {
+		if (!editor) return;
+
+		if (url === '') {
+			editor.chain().focus().extendMarkRange('link').unsetLink().run();
+			return;
+		}
+
+		const linkAttributes = {
+			href: url,
+			target: target,
+			rel: target === '_blank' ? 'noopener noreferrer' : null,
+			class: 'editor-link'
 		};
 
-		loadEditor();
-	}, []);
+		// If we have text and no text is selected, insert the text first
+		if (text && editor.state.selection.empty) {
+			editor.chain()
+				.focus()
+				.insertContent(text)
+				.setTextSelection({
+					from: editor.state.selection.from - text.length,
+					to: editor.state.selection.from
+				})
+				.setLink(linkAttributes)
+				.run();
+		} else if (text && !editor.state.selection.empty) {
+			// Replace selected text and apply link
+			editor.chain()
+				.focus()
+				.insertContent(text)
+				.setTextSelection({
+					from: editor.state.selection.from - text.length,
+					to: editor.state.selection.from
+				})
+				.setLink(linkAttributes)
+				.run();
+		} else {
+			// Just apply link to selection or insert URL
+			if (editor.state.selection.empty) {
+				const displayText = text || url;
+				editor.chain()
+					.focus()
+					.insertContent(displayText)
+					.setTextSelection({
+						from: editor.state.selection.from - displayText.length,
+						to: editor.state.selection.from
+					})
+					.setLink(linkAttributes)
+					.run();
+			} else {
+				editor.chain()
+					.focus()
+					.setLink(linkAttributes)
+					.run();
+			}
+		}
+	};
+	const handleClearFormatting = () => clearFormatting(editor);
+	const handleSelectAll = () => selectAll(editor);
+	const handleSearchAndReplace = () => searchAndReplace(editor, searchTerm);
 
 	if (!mounted) {
 		return (
@@ -39,7 +345,7 @@ export const EditorWrapper = ({ value, onChange, isFullScreen, uploadImage }: Ed
 		);
 	}
 
-	if (!Editor) {
+	if (!editor) {
 		return (
 			<Textarea
 				value={value || ''}
@@ -50,295 +356,456 @@ export const EditorWrapper = ({ value, onChange, isFullScreen, uploadImage }: Ed
 		);
 	}
 
-	const editorConfig = {
-		height: isFullScreen ? '80vh' : 500,
-		menubar: true,
-		plugins: [
-			'anchor',
-			'autolink',
-			'charmap',
-			'codesample',
-			'emoticons',
-			'image',
-			'link',
-			'lists',
-			'media',
-			'searchreplace',
-			'table',
-			'visualblocks',
-			'wordcount',
-			'checklist',
-			'mediaembed',
-			'casechange',
-			'formatpainter',
-			'pageembed',
-			'powerpaste',
-			'advtable',
-			'advcode',
-			'editimage',
-			'advtemplate',
-			'mentions',
-			'tableofcontents',
-			'footnotes',
-			'autocorrect',
-			'typography',
-			'inlinecss',
-			'markdown',
-			'importword',
-			'exportword',
-			'exportpdf',
-			'fullscreen',
-			'preview',
-			'code',
-			'help',
-			'insertdatetime',
-			'nonbreaking',
-			'pagebreak',
-			'paste',
-			'tabfocus',
-			'template',
-			'textpattern',
-			'hr',
-		],
-		toolbar: [
-			'undo redo | fullscreen preview | blocks fontfamily fontsize',
-			'bold italic underline strikethrough | forecolor backcolor | align lineheight',
-			'checklist numlist bullist indent outdent | link image media table',
-			'codesample blockquote hr pagebreak | emoticons charmap | searchreplace',
-			'formatpainter removeformat | code wordcount | help',
-		].join(' | '),
-
-		skin: 'oxide',
-		content_css: 'default',
-		content_style: `
-      body { 
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-        font-size: 14px; 
-        line-height: 1.6; 
-        color: #333;
-        max-width: none;
-      }
-      h1, h2, h3, h4, h5, h6 { 
-        color: #2d3748; 
-        margin-top: 1.5em; 
-        margin-bottom: 0.5em; 
-        font-weight: 600;
-      }
-      h1 { font-size: 2.25em; }
-      h2 { font-size: 1.875em; }
-      h3 { font-size: 1.5em; }
-      h4 { font-size: 1.25em; }
-      h5 { font-size: 1.125em; }
-      h6 { font-size: 1em; }
-      p { margin-bottom: 1em; }
-      a { color: #3182ce; text-decoration: none; }
-      a:hover { text-decoration: underline; }
-      blockquote { 
-        border-left: 4px solid #e2e8f0; 
-        margin: 1.5em 0; 
-        padding-left: 1.5em; 
-        color: #718096; 
-        font-style: italic;
-      }
-      code { 
-        background: #f7fafc; 
-        padding: 0.25em 0.5em; 
-        border-radius: 4px; 
-        font-size: 0.875em; 
-        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-      }
-      pre { 
-        background: #1a202c; 
-        color: #e2e8f0;
-        padding: 1.5em; 
-        border-radius: 8px; 
-        overflow-x: auto;
-        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-        line-height: 1.5;
-      }
-      table { 
-        border-collapse: collapse; 
-        width: 100%; 
-        margin: 1.5em 0; 
-        border: 1px solid #e2e8f0;
-      }
-      th, td { 
-        border: 1px solid #e2e8f0; 
-        padding: 12px; 
-        text-align: left; 
-      }
-      th { 
-        background: #f7fafc; 
-        font-weight: 600; 
-      }
-      img {
-        max-width: 100%;
-        height: auto;
-        border-radius: 8px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      }
-      ul, ol {
-        padding-left: 2em;
-        margin: 1em 0;
-      }
-      li {
-        margin-bottom: 0.5em;
-      }
-    `,
-
-		font_family_formats: [
-			'Arial=arial,helvetica,sans-serif',
-			'Times New Roman=times new roman,times,serif',
-			'Georgia=georgia,serif',
-			'Verdana=verdana,sans-serif',
-			'Courier New=courier new,courier,monospace',
-			'Tahoma=tahoma,sans-serif',
-			'Trebuchet MS=trebuchet ms,sans-serif',
-			'Impact=impact,sans-serif',
-		].join('; '),
-
-		font_size_formats: '8px 10px 12px 14px 16px 18px 20px 22px 24px 26px 28px 32px 36px 48px 72px',
-
-		image_advtab: true,
-		image_uploadtab: true,
-		file_picker_types: 'image',
-		automatic_uploads: true,
-		paste_data_images: true,
-
-		images_upload_handler: async (blobInfo: any) => {
-			return new Promise((resolve, reject) => {
-				const file = blobInfo.blob();
-				uploadImage(file)
-					.then((response: any) => {
-						if (response.url) {
-							resolve(response.url);
-						} else {
-							reject('Không thể tải ảnh lên');
-						}
-					})
-					.catch((error: any) => {
-						reject('Lỗi tải ảnh: ' + error.message);
-					});
-			});
-		},
-
-		paste_as_text: false,
-		paste_auto_cleanup_on_paste: true,
-		paste_remove_styles_if_webkit: false,
-		paste_merge_formats: true,
-		smart_paste: true,
-
-		table_default_attributes: { border: '1' },
-		table_default_styles: {
-			'border-collapse': 'collapse',
-			width: '100%',
-		},
-		table_responsive_width: true,
-
-		link_default_protocol: 'https',
-		link_assume_external_targets: true,
-		link_context_toolbar: true,
-
-		codesample_languages: [
-			{ text: 'HTML/XML', value: 'markup' },
-			{ text: 'JavaScript', value: 'javascript' },
-			{ text: 'CSS', value: 'css' },
-			{ text: 'PHP', value: 'php' },
-			{ text: 'Ruby', value: 'ruby' },
-			{ text: 'Python', value: 'python' },
-			{ text: 'Java', value: 'java' },
-			{ text: 'C', value: 'c' },
-			{ text: 'C#', value: 'csharp' },
-			{ text: 'C++', value: 'cpp' },
-		],
-
-		templates: [
-			{
-				title: 'Bài viết cơ bản',
-				description: 'Template cơ bản cho bài viết',
-				content: `
-          <h2>Tiêu đề chính</h2>
-          <p>Đoạn mở đầu giới thiệu về chủ đề bài viết...</p>
-          
-          <h3>Nội dung chính</h3>
-          <p>Phát triển ý tưởng và cung cấp thông tin chi tiết...</p>
-          
-          <blockquote>
-            <p>Một câu trích dẫn hoặc thông tin quan trọng</p>
-          </blockquote>
-          
-          <h3>Kết luận</h3>
-          <p>Tóm tắt và kết luận bài viết...</p>
-        `,
-			},
-			{
-				title: 'Bài viết có hình ảnh',
-				description: 'Template với hình ảnh minh họa',
-				content: `
-          <h2>Tiêu đề với hình ảnh</h2>
-          <p>Giới thiệu về chủ đề...</p>
-          
-          <p><img src="https://via.placeholder.com/600x400/f0f0f0/666?text=Hình+minh+họa" alt="Hình minh họa" style="width: 100%; max-width: 600px;" /></p>
-          
-          <h3>Phân tích chi tiết</h3>
-          <p>Nội dung phân tích dựa trên hình ảnh...</p>
-        `,
-			},
-			{
-				title: 'Bài viết có bảng',
-				description: 'Template với bảng dữ liệu',
-				content: `
-          <h2>Dữ liệu và thống kê</h2>
-          <p>Giới thiệu về dữ liệu...</p>
-          
-          <table style="border-collapse: collapse; width: 100%; margin: 20px 0;">
-            <thead>
-              <tr style="background-color: #f8f9fa;">
-                <th style="border: 1px solid #dee2e6; padding: 12px;">Tiêu đề 1</th>
-                <th style="border: 1px solid #dee2e6; padding: 12px;">Tiêu đề 2</th>
-                <th style="border: 1px solid #dee2e6; padding: 12px;">Tiêu đề 3</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td style="border: 1px solid #dee2e6; padding: 12px;">Dữ liệu 1</td>
-                <td style="border: 1px solid #dee2e6; padding: 12px;">Dữ liệu 2</td>
-                <td style="border: 1px solid #dee2e6; padding: 12px;">Dữ liệu 3</td>
-              </tr>
-            </tbody>
-          </table>
-          
-          <p>Phân tích dữ liệu trong bảng...</p>
-        `,
-			},
-		],
-
-		browser_spellcheck: true,
-		contextmenu: 'link image table',
-		placeholder: 'Bắt đầu viết nội dung bài viết của bạn...',
-		resize: 'both',
-		statusbar: true,
-
-		setup: (editor: any) => {
-			editor.on('init', () => {
-				editorRef.current = editor;
-			});
-		},
-
-		branding: false,
-		language: 'vi',
-	};
-
 	return (
-		<div className={`tinymce-container ${isFullScreen ? 'fullscreen-editor' : ''}`}>
-			<Editor
-				apiKey='1h1h01p48rexzbjsj0pbq5jv01cgy2srguriuatuwcq2odfk'
-				value={value || ''}
-				onEditorChange={(content: string) => {
-					onChange(content);
-				}}
-				init={editorConfig}
+		<div className={`border border-gray-300 rounded-lg shadow-sm ${isFullScreen ? 'h-screen' : ''}`}>
+			{/* Toolbar */}
+			<EditorToolbar
+				editor={editor}
+				showSearch={showSearch}
+				searchTerm={searchTerm}
+				isPreviewMode={isPreviewMode}
+				wordCount={wordCount}
+				isFullScreen={isFullScreen}
+				fileInputRef={fileInputRef}
+				onSearchToggle={handleSearchToggle}
+				onSearchTermChange={handleSearchTermChange}
+				onPreviewToggle={handlePreviewToggle}
+				onImageUpload={handleImageUploadClick}
+				onExportHTML={handleExportHTML}
+				onExportMarkdown={handleExportMarkdown}
+				onExportWord={handleExportWord}
+				onExportPDF={handleExportPDF}
+				onImportFile={handleImportFile}
+				onPrint={handlePrint}
+				onCopyToClipboard={handleCopyToClipboard}
+				onPasteFromClipboard={handlePasteFromClipboard}
+				onInsertTemplate={handleInsertTemplate}
+				onInsertTable={handleInsertTable}
+				onInsertSymbol={handleInsertSymbol}
+				onInsertDateTime={handleInsertDateTime}
+				onInsertPageBreak={handleInsertPageBreak}
+				onAddLink={handleAddLink}
+				onClearFormatting={handleClearFormatting}
+				onSelectAll={handleSelectAll}
+				onSearchAndReplace={handleSearchAndReplace}
 			/>
+
+			{/* Editor Content */}
+			<div className={`editor-content ${isFullScreen ? 'h-[calc(100vh-250px)]' : 'min-h-[500px]'} overflow-y-auto`}>
+				{isPreviewMode ? (
+					<div
+						className="prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto p-8 max-w-none"
+						dangerouslySetInnerHTML={{ __html: editor.getHTML() }}
+					/>
+				) : (
+					<EditorContent editor={editor} />
+				)}
+			</div>
+
+			{/* Status Bar */}
+			<div className="border-t border-gray-300 px-4 py-2 bg-gray-50 text-xs text-gray-600 flex justify-between items-center rounded-b-lg">
+				<div className="flex gap-6">
+					<span className="font-medium">Words: {wordCount}</span>
+					<span>Characters: {editor.storage.characterCount?.characters() || 0}</span>
+					<span>Characters (no spaces): {editor.storage.characterCount?.characters({ mode: 'textSize' }) || 0}</span>
+				</div>
+				<div className="flex gap-2">
+					{editor.isActive('bold') && <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">Bold</span>}
+					{editor.isActive('italic') && <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">Italic</span>}
+					{editor.isActive('underline') && <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">Underline</span>}
+					{editor.isActive('link') && <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">Link</span>}
+					{editor.isActive('codeBlock') && (
+						<span className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">
+							Code ({editor.getAttributes('codeBlock').language || 'plain'})
+						</span>
+					)}
+					{isPreviewMode && (
+						<span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs">Preview Mode</span>
+					)}
+				</div>
+			</div>
+
+			{/* Link Dialog */}
+			<LinkDialog
+				isOpen={showLinkDialog}
+				onClose={() => setShowLinkDialog(false)}
+				onSave={handleSaveLink}
+				initialUrl={linkData.url}
+				initialText={linkData.text}
+				initialTarget={linkData.target}
+			/>
+
+			{/* Hidden file input for image uploads */}
+			<input
+				type="file"
+				ref={fileInputRef}
+				onChange={handleImageUpload}
+				accept="image/*"
+				className="hidden"
+			/>
+
+			{/* Enhanced Custom styles */}
+			<style jsx global>{`
+        .ProseMirror {
+          outline: none;
+          padding: 2rem;
+          min-height: inherit;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          text-rendering: optimizeLegibility;
+          font-feature-settings: "kern" 1, "liga" 1;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+        }
+
+        .ProseMirror p.is-editor-empty:first-child::before {
+          content: 'Bắt đầu viết nội dung bài viết của bạn...';
+          float: left;
+          color: #adb5bd;
+          pointer-events: none;
+          height: 0;
+          font-style: italic;
+        }
+
+        /* Headings - inherit color from text styling */
+        .ProseMirror h1, .ProseMirror h2, .ProseMirror h3, 
+        .ProseMirror h4, .ProseMirror h5, .ProseMirror h6 {
+          color: inherit;
+          margin-top: 2em;
+          margin-bottom: 0.75em;
+          font-weight: 600;
+          line-height: 1.25;
+        }
+
+        /* Only set default heading color if no custom color is applied */
+        .ProseMirror h1:not([style*="color"]), 
+        .ProseMirror h2:not([style*="color"]), 
+        .ProseMirror h3:not([style*="color"]), 
+        .ProseMirror h4:not([style*="color"]), 
+        .ProseMirror h5:not([style*="color"]), 
+        .ProseMirror h6:not([style*="color"]) {
+          color: #000000;
+        }
+
+        .ProseMirror h1 { font-size: 2.5em; }
+        .ProseMirror h2 { font-size: 2em; }
+        .ProseMirror h3 { font-size: 1.75em; }
+        .ProseMirror h4 { font-size: 1.5em; }
+        .ProseMirror h5 { font-size: 1.25em; }
+        .ProseMirror h6 { font-size: 1.125em; }
+
+        .ProseMirror p {
+          margin-bottom: 1.25em;
+          line-height: 1.75;
+        }
+
+        /* Links - Enhanced styling */
+        .ProseMirror a,
+        .ProseMirror .editor-link {
+          color: #3182ce !important;
+          text-decoration: underline;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          border-bottom: 1px solid transparent;
+        }
+
+        .ProseMirror a:hover,
+        .ProseMirror .editor-link:hover {
+          color: #2c5aa0 !important;
+          border-bottom-color: #3182ce;
+          background-color: rgba(59, 130, 246, 0.1);
+        }
+
+        /* Link selection styling */
+        .ProseMirror a.ProseMirror-selectednode,
+        .ProseMirror .editor-link.ProseMirror-selectednode {
+          outline: 2px solid #3182ce;
+          outline-offset: 2px;
+          border-radius: 2px;
+        }
+
+        /* Simple TinyMCE-style blockquote */
+        .ProseMirror blockquote {
+          border-left: 4px solid #ddd;
+          margin: 1.5em 0;
+          padding-left: 1.5em;
+          color: #666;
+          font-style: italic;
+          background: none;
+          border-radius: 0;
+        }
+
+        .ProseMirror code {
+          background: #f1f5f9;
+          padding: 0.25em 0.5em;
+          border-radius: 4px;
+          font-size: 0.875em;
+          font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+          color: #e53e3e;
+          border: 1px solid #e2e8f0;
+        }
+
+        .ProseMirror pre {
+          background: #0f172a;
+          color: #e2e8f0;
+          padding: 1.5em;
+          border-radius: 12px;
+          overflow-x: auto;
+          font-family: 'Fira Code', 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+          line-height: 1.6;
+          margin: 2em 0;
+          border: 1px solid #1e293b;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+          position: relative;
+        }
+
+        .ProseMirror pre code {
+          background: none;
+          padding: 0;
+          color: inherit;
+          border: none;
+          font-size: 0.875em;
+        }
+
+        .ProseMirror table {
+          border-collapse: collapse;
+          width: 100%;
+          margin: 2em 0;
+          border: 2px solid #e2e8f0;
+          border-radius: 8px;
+          overflow: hidden;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .ProseMirror th, .ProseMirror td {
+          border: 1px solid #e2e8f0;
+          padding: 12px 16px;
+          text-align: left;
+          vertical-align: top;
+        }
+
+        .ProseMirror th {
+          background: #f8fafc;
+          font-weight: 600;
+          color: #2d3748;
+        }
+
+        .ProseMirror tbody tr:hover {
+          background: #f8fafc;
+        }
+
+        .ProseMirror img {
+          max-width: 100%;
+          height: auto;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+          margin: 2em auto;
+          display: block;
+          border: 2px solid #f1f5f9;
+        }
+
+        .ProseMirror ul, .ProseMirror ol {
+          padding-left: 2em;
+          margin: 1.5em 0;
+        }
+
+        .ProseMirror li {
+          margin-bottom: 0.5em;
+          line-height: 1.7;
+        }
+
+        .ProseMirror ul[data-type="taskList"] {
+          list-style: none;
+          padding: 0;
+          margin: 1.5em 0;
+        }
+
+        .ProseMirror ul[data-type="taskList"] li {
+          display: flex;
+          align-items: flex-start;
+          margin-bottom: 0.75em;
+          padding: 0.75em;
+          border-radius: 8px;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          transition: all 0.2s ease;
+        }
+
+        .ProseMirror ul[data-type="taskList"] li:hover {
+          background: #f1f5f9;
+          border-color: #cbd5e1;
+        }
+
+        .ProseMirror ul[data-type="taskList"] li > label {
+          flex: 0 0 auto;
+          margin-right: 0.75rem;
+          user-select: none;
+          cursor: pointer;
+        }
+
+        .ProseMirror ul[data-type="taskList"] li > label input[type="checkbox"] {
+          width: 16px;
+          height: 16px;
+          accent-color: #3182ce;
+        }
+
+        .ProseMirror ul[data-type="taskList"] li > div {
+          flex: 1 1 auto;
+        }
+
+        .ProseMirror ul[data-type="taskList"] li[data-checked="true"] > div {
+          text-decoration: line-through;
+          color: #718096;
+        }
+
+        .ProseMirror mark {
+          background: #fef08a;
+          padding: 0.1em 0.3em;
+          border-radius: 0.25em;
+          box-decoration-break: clone;
+        }
+
+        .ProseMirror .hr-divider {
+          border: none;
+          border-top: 3px solid #e2e8f0;
+          margin: 3em 0;
+          border-radius: 2px;
+        }
+
+        .ProseMirror .page-break {
+          page-break-after: always;
+          height: 2px;
+          background: linear-gradient(90deg, transparent 0%, #e2e8f0 20%, #e2e8f0 80%, transparent 100%);
+          margin: 2em 0;
+          position: relative;
+          border-radius: 1px;
+        }
+
+        .ProseMirror .page-break::after {
+          content: "Page Break";
+          position: absolute;
+          top: -10px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: white;
+          padding: 2px 8px;
+          font-size: 10px;
+          color: #666;
+          border: 1px solid #e2e8f0;
+          border-radius: 4px;
+        }
+
+        /* Enhanced focus styles */
+        .ProseMirror:focus {
+          box-shadow: inset 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+
+        /* Better selection styles */
+        .ProseMirror ::selection {
+          background: rgba(59, 130, 246, 0.2);
+        }
+
+        /* Print styles */
+        @media print {
+          .ProseMirror {
+            font-size: 12pt;
+            line-height: 1.6;
+            color: black;
+          }
+          
+          .ProseMirror img {
+            max-width: 100%;
+            page-break-inside: avoid;
+          }
+          
+          .ProseMirror table {
+            page-break-inside: avoid;
+          }
+          
+          .ProseMirror h1, .ProseMirror h2, .ProseMirror h3,
+          .ProseMirror h4, .ProseMirror h5, .ProseMirror h6 {
+            color: #000000 !important;
+            page-break-after: avoid;
+          }
+
+          .ProseMirror blockquote {
+            background: none !important;
+            border-left: 4px solid #333 !important;
+          }
+
+          .ProseMirror pre {
+            background: #f5f5f5 !important;
+            color: #333 !important;
+            border: 1px solid #ddd !important;
+          }
+
+          .page-break {
+            page-break-after: always !important;
+          }
+        }
+
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+          .ProseMirror {
+            color: #e2e8f0;
+          }
+          
+          .ProseMirror h1, .ProseMirror h2, .ProseMirror h3,
+          .ProseMirror h4, .ProseMirror h5, .ProseMirror h6 {
+            color: #f1f5f9;
+          }
+          
+          .ProseMirror blockquote {
+            border-left-color: #4a5568;
+            color: #a0aec0;
+          }
+          
+          .ProseMirror code {
+            background: #2d3748;
+            color: #f56565;
+            border-color: #4a5568;
+          }
+
+          .ProseMirror table {
+            border-color: #4a5568;
+          }
+
+          .ProseMirror th, .ProseMirror td {
+            border-color: #4a5568;
+          }
+
+          .ProseMirror th {
+            background: #2d3748;
+            color: #f1f5f9;
+          }
+
+          .ProseMirror ul[data-type="taskList"] li {
+            background: #2d3748;
+            border-color: #4a5568;
+          }
+        }
+
+        /* Smooth transitions */
+        .ProseMirror * {
+          transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+          .ProseMirror {
+            padding: 1rem;
+          }
+          
+          .ProseMirror blockquote {
+            padding-left: 1em;
+            margin: 1em 0;
+          }
+          
+          .ProseMirror pre {
+            padding: 1em;
+            font-size: 0.875em;
+          }
+        }
+      `}</style>
 		</div>
 	);
 };
