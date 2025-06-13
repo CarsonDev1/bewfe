@@ -33,9 +33,10 @@ import { Loader2 } from 'lucide-react';
 import { EditorToolbar } from './EditorToolbar';
 import { LinkDialog } from './LinkDialog';
 import { ImageUploadDialog } from './ImageUploadDialog';
+import { TableDialog } from './TableDialog';
 import { FontSize, getCurrentFontSize } from '../extensions/FontSizeExtension';
 import { Autolink } from '../extensions/AutolinkExtension';
-import { EditorWrapperProps } from '../../../types/EditorTypes';
+import { EditorWrapperProps } from '@/types/EditorTypes';
 import {
 	exportToHTML,
 	exportToMarkdown,
@@ -54,7 +55,7 @@ import {
 	copyToClipboard,
 	pasteFromClipboard,
 	searchAndReplace
-} from '../../../utils/EditorUtils';
+} from '@/utils/EditorUtils';
 
 // Import languages for code highlighting
 import javascript from 'highlight.js/lib/languages/javascript';
@@ -103,6 +104,7 @@ export const EditorWrapper: React.FC<EditorWrapperProps> = ({
 	const [wordCount, setWordCount] = useState(0);
 	const [showLinkDialog, setShowLinkDialog] = useState(false);
 	const [showImageDialog, setShowImageDialog] = useState(false);
+	const [showTableDialog, setShowTableDialog] = useState(false);
 	const [linkData, setLinkData] = useState({ url: '', text: '', target: '_blank' as '_blank' | '_self' });
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -125,21 +127,15 @@ export const EditorWrapper: React.FC<EditorWrapperProps> = ({
 				},
 			}),
 			Link.configure({
-				openOnClick: true,
-				linkOnPaste: true,
-				autolink: false, // Disable auto link to avoid conflicts
+				openOnClick: true, // Enable click to open links
+				linkOnPaste: true, // Auto-detect links when pasting
+				autolink: true, // Auto-detect typed URLs
 				HTMLAttributes: {
 					class: 'editor-link',
+					rel: 'noopener noreferrer',
 				},
 				protocols: ['http', 'https', 'mailto', 'tel'],
-				validate: href => {
-					// Validate URL
-					return /^https?:\/\//.test(href) ||
-						/^mailto:/.test(href) ||
-						/^tel:/.test(href) ||
-						/^\//.test(href) ||
-						/^#/.test(href);
-				},
+				validate: href => /^https?:\/\//.test(href) || /^mailto:/.test(href) || /^tel:/.test(href) || /^\//.test(href),
 			}),
 			Table.configure({
 				resizable: true,
@@ -273,7 +269,39 @@ export const EditorWrapper: React.FC<EditorWrapperProps> = ({
 		}
 	};
 
-	const handleInsertTable = () => insertTable(editor);
+	const handleInsertTable = (rows: number, cols: number, withHeader: boolean) => {
+		if (!editor) return;
+
+		try {
+			// Use Tiptap's built-in table insertion
+			editor.chain().focus().insertTable({
+				rows: rows,
+				cols: cols,
+				withHeaderRow: withHeader
+			}).run();
+		} catch (error) {
+			console.error('Error inserting table:', error);
+			// Fallback: Insert HTML table
+			const tableHTML = generateTableHTML(rows, cols, withHeader);
+			editor.chain().focus().insertContent(tableHTML).run();
+		}
+	};
+
+	const generateTableHTML = (rows: number, cols: number, withHeader: boolean): string => {
+		const headers = Array.from({ length: cols }, (_, i) => `<th>Header ${i + 1}</th>`).join('');
+		const bodyRowsCount = withHeader ? rows - 1 : rows;
+		const bodyRows = Array.from({ length: bodyRowsCount }, (_, i) => {
+			const rowCells = Array.from({ length: cols }, (_, j) => `<td>Cell ${i + 1}-${j + 1}</td>`).join('');
+			return `<tr>${rowCells}</tr>`;
+		}).join('');
+
+		return `
+      <table>
+        ${withHeader ? `<thead><tr>${headers}</tr></thead>` : ''}
+        <tbody>${bodyRows}</tbody>
+      </table>
+    `;
+	};
 	const handleInsertSymbol = (symbol: string) => insertSymbol(editor, symbol);
 	const handleInsertDateTime = () => insertDateTime(editor);
 	const handleInsertPageBreak = () => insertPageBreak(editor);
@@ -298,64 +326,54 @@ export const EditorWrapper: React.FC<EditorWrapperProps> = ({
 	const handleSaveLink = (url: string, text: string, target: '_blank' | '_self') => {
 		if (!editor) return;
 
-		// Remove link if URL is empty
-		if (!url.trim()) {
+		if (url === '') {
 			editor.chain().focus().extendMarkRange('link').unsetLink().run();
 			return;
 		}
 
-		// Prepare link attributes
-		const linkAttributes: any = {
-			href: url.trim(),
+		const linkAttributes = {
+			href: url,
+			target: target,
+			rel: target === '_blank' ? 'noopener noreferrer' : null,
 			class: 'editor-link'
 		};
 
-		// Add target and rel attributes
-		if (target === '_blank') {
-			linkAttributes.target = '_blank';
-			linkAttributes.rel = 'noopener noreferrer';
+		// If we have text and no text is selected, insert the text first
+		if (text && editor.state.selection.empty) {
+			editor.chain()
+				.focus()
+				.insertContent(text)
+				.setTextSelection({
+					from: editor.state.selection.from - text.length,
+					to: editor.state.selection.from
+				})
+				.setLink(linkAttributes)
+				.run();
+		} else if (text && !editor.state.selection.empty) {
+			// Replace selected text and apply link
+			editor.chain()
+				.focus()
+				.insertContent(text)
+				.setTextSelection({
+					from: editor.state.selection.from - text.length,
+					to: editor.state.selection.from
+				})
+				.setLink(linkAttributes)
+				.run();
 		} else {
-			linkAttributes.target = '_self';
-		}
-
-		const { selection } = editor.state;
-		const { from, to, empty } = selection;
-
-		if (text && text.trim()) {
-			// If we have custom text
-			if (empty) {
-				// No selection - insert text with link
+			// Just apply link to selection or insert URL
+			if (editor.state.selection.empty) {
+				const displayText = text || url;
 				editor.chain()
 					.focus()
-					.insertContent(text)
-					.setTextSelection({ from: from, to: from + text.length })
+					.insertContent(displayText)
+					.setTextSelection({
+						from: editor.state.selection.from - displayText.length,
+						to: editor.state.selection.from
+					})
 					.setLink(linkAttributes)
-					.setTextSelection({ from: from + text.length, to: from + text.length })
 					.run();
 			} else {
-				// Has selection - replace with new text and link
-				editor.chain()
-					.focus()
-					.deleteSelection()
-					.insertContent(text)
-					.setTextSelection({ from: from, to: from + text.length })
-					.setLink(linkAttributes)
-					.setTextSelection({ from: from + text.length, to: from + text.length })
-					.run();
-			}
-		} else {
-			// No custom text
-			if (empty) {
-				// No selection - insert URL as text with link
-				editor.chain()
-					.focus()
-					.insertContent(url)
-					.setTextSelection({ from: from, to: from + url.length })
-					.setLink(linkAttributes)
-					.setTextSelection({ from: from + url.length, to: from + url.length })
-					.run();
-			} else {
-				// Has selection - apply link to selected text
 				editor.chain()
 					.focus()
 					.setLink(linkAttributes)
@@ -410,7 +428,7 @@ export const EditorWrapper: React.FC<EditorWrapperProps> = ({
 				onCopyToClipboard={handleCopyToClipboard}
 				onPasteFromClipboard={handlePasteFromClipboard}
 				onInsertTemplate={handleInsertTemplate}
-				onInsertTable={handleInsertTable}
+				onInsertTable={() => setShowTableDialog(true)}
 				onInsertSymbol={handleInsertSymbol}
 				onInsertDateTime={handleInsertDateTime}
 				onInsertPageBreak={handleInsertPageBreak}
@@ -454,6 +472,13 @@ export const EditorWrapper: React.FC<EditorWrapperProps> = ({
 					)}
 				</div>
 			</div>
+
+			{/* Table Dialog */}
+			<TableDialog
+				isOpen={showTableDialog}
+				onClose={() => setShowTableDialog(false)}
+				onInsert={handleInsertTable}
+			/>
 
 			{/* Image Upload Dialog */}
 			<ImageUploadDialog

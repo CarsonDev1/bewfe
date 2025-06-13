@@ -54,6 +54,7 @@ export const exportToMarkdown = (editor: any) => {
   content = content.replace(/<blockquote[^>]*>(.*?)<\/blockquote>/g, (match: string, text: string) => {
     return '> ' + text.replace(/<p[^>]*>/g, '').replace(/<\/p>/g, '\n> ').replace(/<[^>]*>/g, '').trim() + '\n\n';
   });
+
   // Convert code blocks
   content = content.replace(/<pre[^>]*><code[^>]*>(.*?)<\/code><\/pre>/g, (match: string, code: string) => {
     return '```\n' + code.replace(/<[^>]*>/g, '').trim() + '\n```\n\n';
@@ -75,9 +76,9 @@ export const exportToMarkdown = (editor: any) => {
     let markdown = '\n';
     const rows = tableContent.match(/<tr[^>]*>(.*?)<\/tr>/g) || [];
 
-    rows.forEach((row, index) => {
+    rows.forEach((row: string, index: number) => {
       const cells = row.match(/<t[hd][^>]*>(.*?)<\/t[hd]>/g) || [];
-      const cellContents = cells.map(cell => cell.replace(/<[^>]*>/g, '').trim());
+      const cellContents = cells.map((cell: string) => cell.replace(/<[^>]*>/g, '').trim());
       markdown += '| ' + cellContents.join(' | ') + ' |\n';
 
       if (index === 0) { // Header row
@@ -90,6 +91,7 @@ export const exportToMarkdown = (editor: any) => {
 
   // Convert horizontal rules
   content = content.replace(/<hr[^>]*>/g, '\n---\n\n');
+
   // Convert paragraphs
   content = content.replace(/<p[^>]*>(.*?)<\/p>/g, '$1\n\n');
 
@@ -468,17 +470,44 @@ export const insertPageBreak = (editor: any) => {
   editor?.chain().focus().insertContent(pageBreak).run();
 };
 
-export const insertTable = (editor: any) => {
-  const rows = window.prompt('Number of rows:', '3');
-  const cols = window.prompt('Number of columns:', '3');
+export const insertTable = (editor: any, rows: number = 3, cols: number = 3) => {
+  if (!editor) return;
 
-  if (rows && cols) {
-    editor?.chain().focus().insertTable({
-      rows: parseInt(rows),
-      cols: parseInt(cols),
+  try {
+    // Use Tiptap's built-in table insertion
+    editor.chain().focus().insertTable({
+      rows: rows,
+      cols: cols,
       withHeaderRow: true
     }).run();
+  } catch (error) {
+    console.error('Error inserting table:', error);
+    // Fallback: Insert HTML table
+    const tableHTML = generateTableHTML(rows, cols);
+    editor.chain().focus().insertContent(tableHTML).run();
   }
+};
+
+// Helper function to generate table HTML
+const generateTableHTML = (rows: number, cols: number): string => {
+  const headers = Array.from({ length: cols }, (_, i) => `<th>Header ${i + 1}</th>`).join('');
+  const cells = Array.from({ length: cols }, (_, i) => `<td>Cell ${i + 1}</td>`).join('');
+  const bodyRows = Array.from({ length: rows - 1 }, (_, i) => {
+    const rowCells = Array.from({ length: cols }, (_, j) => `<td>Row ${i + 2} Col ${j + 1}</td>`).join('');
+    return `<tr>${rowCells}</tr>`;
+  }).join('');
+
+  return `
+    <table>
+      <thead>
+        <tr>${headers}</tr>
+      </thead>
+      <tbody>
+        <tr>${cells}</tr>
+        ${bodyRows}
+      </tbody>
+    </table>
+  `;
 };
 
 export const addLink = (editor: any) => {
@@ -525,5 +554,53 @@ export const searchAndReplace = (editor: any, searchTerm: string) => {
   if (replaceTerm !== null) {
     const newContent = content.replace(new RegExp(searchTerm, 'gi'), replaceTerm);
     editor?.commands.setContent(newContent);
+    return true;
+  }
+  return false;
+};
+
+// Word count utility
+export const getWordCount = (editor: any): number => {
+  if (!editor) return 0;
+
+  const text = editor.getText() || '';
+  return text.trim().split(/\s+/).filter((word: string) => word.length > 0).length;
+};
+
+// Character count utility
+export const getCharacterCount = (editor: any): number => {
+  if (!editor) return 0;
+
+  return editor.getText()?.length || 0;
+};
+
+// Save content to localStorage
+export const saveToLocalStorage = (editor: any, key: string = 'editor-content') => {
+  if (!editor) return false;
+
+  try {
+    const content = editor.getHTML();
+    localStorage.setItem(key, content);
+    return true;
+  } catch (error) {
+    console.error('Failed to save to localStorage:', error);
+    return false;
+  }
+};
+
+// Load content from localStorage
+export const loadFromLocalStorage = (editor: any, key: string = 'editor-content') => {
+  if (!editor) return false;
+
+  try {
+    const content = localStorage.getItem(key);
+    if (content) {
+      editor.commands.setContent(content);
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error('Failed to load from localStorage:', error);
+    return false;
   }
 };
