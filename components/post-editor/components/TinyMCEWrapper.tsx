@@ -32,6 +32,7 @@ import { Loader2 } from 'lucide-react';
 // Import custom components and utilities
 import { EditorToolbar } from './EditorToolbar';
 import { LinkDialog } from './LinkDialog';
+import { ImageUploadDialog } from './ImageUploadDialog';
 import { FontSize, getCurrentFontSize } from '../extensions/FontSizeExtension';
 import { Autolink } from '../extensions/AutolinkExtension';
 import { EditorWrapperProps } from '../../../types/EditorTypes';
@@ -101,6 +102,7 @@ export const EditorWrapper: React.FC<EditorWrapperProps> = ({
 	const [isPreviewMode, setIsPreviewMode] = useState(false);
 	const [wordCount, setWordCount] = useState(0);
 	const [showLinkDialog, setShowLinkDialog] = useState(false);
+	const [showImageDialog, setShowImageDialog] = useState(false);
 	const [linkData, setLinkData] = useState({ url: '', text: '', target: '_blank' as '_blank' | '_self' });
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -235,7 +237,19 @@ export const EditorWrapper: React.FC<EditorWrapperProps> = ({
 	const handleSearchToggle = () => setShowSearch(!showSearch);
 	const handleSearchTermChange = (term: string) => setSearchTerm(term);
 	const handlePreviewToggle = () => setIsPreviewMode(!isPreviewMode);
-	const handleImageUploadClick = () => fileInputRef.current?.click();
+	const handleImageUploadClick = () => {
+		setShowImageDialog(true);
+	};
+
+	const handleImageUploadFromDialog = async (file: File) => {
+		return await uploadImage(file);
+	};
+
+	const handleImageUrlInsert = (url: string, alt: string) => {
+		if (editor) {
+			editor.chain().focus().setImage({ src: url, alt }).run();
+		}
+	};
 
 	const handleExportHTML = () => exportToHTML(editor);
 	const handleExportMarkdown = () => exportToMarkdown(editor);
@@ -424,6 +438,14 @@ export const EditorWrapper: React.FC<EditorWrapperProps> = ({
 					)}
 				</div>
 			</div>
+
+			{/* Image Upload Dialog */}
+			<ImageUploadDialog
+				isOpen={showImageDialog}
+				onClose={() => setShowImageDialog(false)}
+				onUpload={handleImageUploadFromDialog}
+				onInsertUrl={handleImageUrlInsert}
+			/>
 
 			{/* Link Dialog */}
 			<LinkDialog
