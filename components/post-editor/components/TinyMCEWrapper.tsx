@@ -125,15 +125,21 @@ export const EditorWrapper: React.FC<EditorWrapperProps> = ({
 				},
 			}),
 			Link.configure({
-				openOnClick: true, // Enable click to open links
-				linkOnPaste: true, // Auto-detect links when pasting
-				autolink: true, // Auto-detect typed URLs
+				openOnClick: true,
+				linkOnPaste: true,
+				autolink: false, // Disable auto link to avoid conflicts
 				HTMLAttributes: {
 					class: 'editor-link',
-					rel: 'noopener noreferrer',
 				},
 				protocols: ['http', 'https', 'mailto', 'tel'],
-				validate: href => /^https?:\/\//.test(href) || /^mailto:/.test(href) || /^tel:/.test(href) || /^\//.test(href),
+				validate: href => {
+					// Validate URL
+					return /^https?:\/\//.test(href) ||
+						/^mailto:/.test(href) ||
+						/^tel:/.test(href) ||
+						/^\//.test(href) ||
+						/^#/.test(href);
+				},
 			}),
 			Table.configure({
 				resizable: true,
@@ -292,54 +298,64 @@ export const EditorWrapper: React.FC<EditorWrapperProps> = ({
 	const handleSaveLink = (url: string, text: string, target: '_blank' | '_self') => {
 		if (!editor) return;
 
-		if (url === '') {
+		// Remove link if URL is empty
+		if (!url.trim()) {
 			editor.chain().focus().extendMarkRange('link').unsetLink().run();
 			return;
 		}
 
-		const linkAttributes = {
-			href: url,
-			target: target,
-			rel: target === '_blank' ? 'noopener noreferrer' : null,
+		// Prepare link attributes
+		const linkAttributes: any = {
+			href: url.trim(),
 			class: 'editor-link'
 		};
 
-		// If we have text and no text is selected, insert the text first
-		if (text && editor.state.selection.empty) {
-			editor.chain()
-				.focus()
-				.insertContent(text)
-				.setTextSelection({
-					from: editor.state.selection.from - text.length,
-					to: editor.state.selection.from
-				})
-				.setLink(linkAttributes)
-				.run();
-		} else if (text && !editor.state.selection.empty) {
-			// Replace selected text and apply link
-			editor.chain()
-				.focus()
-				.insertContent(text)
-				.setTextSelection({
-					from: editor.state.selection.from - text.length,
-					to: editor.state.selection.from
-				})
-				.setLink(linkAttributes)
-				.run();
+		// Add target and rel attributes
+		if (target === '_blank') {
+			linkAttributes.target = '_blank';
+			linkAttributes.rel = 'noopener noreferrer';
 		} else {
-			// Just apply link to selection or insert URL
-			if (editor.state.selection.empty) {
-				const displayText = text || url;
+			linkAttributes.target = '_self';
+		}
+
+		const { selection } = editor.state;
+		const { from, to, empty } = selection;
+
+		if (text && text.trim()) {
+			// If we have custom text
+			if (empty) {
+				// No selection - insert text with link
 				editor.chain()
 					.focus()
-					.insertContent(displayText)
-					.setTextSelection({
-						from: editor.state.selection.from - displayText.length,
-						to: editor.state.selection.from
-					})
+					.insertContent(text)
+					.setTextSelection({ from: from, to: from + text.length })
 					.setLink(linkAttributes)
+					.setTextSelection({ from: from + text.length, to: from + text.length })
 					.run();
 			} else {
+				// Has selection - replace with new text and link
+				editor.chain()
+					.focus()
+					.deleteSelection()
+					.insertContent(text)
+					.setTextSelection({ from: from, to: from + text.length })
+					.setLink(linkAttributes)
+					.setTextSelection({ from: from + text.length, to: from + text.length })
+					.run();
+			}
+		} else {
+			// No custom text
+			if (empty) {
+				// No selection - insert URL as text with link
+				editor.chain()
+					.focus()
+					.insertContent(url)
+					.setTextSelection({ from: from, to: from + url.length })
+					.setLink(linkAttributes)
+					.setTextSelection({ from: from + url.length, to: from + url.length })
+					.run();
+			} else {
+				// Has selection - apply link to selected text
 				editor.chain()
 					.focus()
 					.setLink(linkAttributes)
