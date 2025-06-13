@@ -299,7 +299,7 @@ const PostDetail = () => {
 
 						{/* Content */}
 						<div
-							className='prose prose-lg max-w-none prose-headings:bg-gradient-to-r prose-headings:from-slate-800 prose-headings:to-blue-800 prose-headings:bg-clip-text prose-headings:text-transparent prose-a:text-blue-600 prose-a:font-semibold hover:prose-a:text-blue-700'
+							className='tinymce-content'
 							dangerouslySetInnerHTML={{ __html: post.content }}
 						/>
 
