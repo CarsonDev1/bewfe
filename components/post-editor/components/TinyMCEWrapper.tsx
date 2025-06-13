@@ -32,10 +32,8 @@ import { Loader2 } from 'lucide-react';
 // Import custom components and utilities
 import { EditorToolbar } from './EditorToolbar';
 import { LinkDialog } from './LinkDialog';
-import { ImageUploadDialog } from './ImageUploadDialog';
-import { TableDialog } from './TableDialog';
 import { FontSize, getCurrentFontSize } from '../extensions/FontSizeExtension';
-import { Autolink } from '../extensions/AutolinkExtension';
+import { Indent } from '../extensions/IndentExtions';
 import { EditorWrapperProps } from '@/types/EditorTypes';
 import {
 	exportToHTML,
@@ -103,8 +101,6 @@ export const EditorWrapper: React.FC<EditorWrapperProps> = ({
 	const [isPreviewMode, setIsPreviewMode] = useState(false);
 	const [wordCount, setWordCount] = useState(0);
 	const [showLinkDialog, setShowLinkDialog] = useState(false);
-	const [showImageDialog, setShowImageDialog] = useState(false);
-	const [showTableDialog, setShowTableDialog] = useState(false);
 	const [linkData, setLinkData] = useState({ url: '', text: '', target: '_blank' as '_blank' | '_self' });
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -118,6 +114,17 @@ export const EditorWrapper: React.FC<EditorWrapperProps> = ({
 				paragraph: false,
 				text: false,
 				codeBlock: false,
+				// Keep list items for proper list functionality
+				bulletList: {
+					HTMLAttributes: {
+						class: 'list-disc',
+					},
+				},
+				orderedList: {
+					HTMLAttributes: {
+						class: 'list-decimal',
+					},
+				},
 			}),
 			Image.configure({
 				inline: true,
@@ -127,15 +134,12 @@ export const EditorWrapper: React.FC<EditorWrapperProps> = ({
 				},
 			}),
 			Link.configure({
-				openOnClick: true, // Enable click to open links
-				linkOnPaste: true, // Auto-detect links when pasting
-				autolink: true, // Auto-detect typed URLs
+				openOnClick: false,
 				HTMLAttributes: {
-					class: 'editor-link',
+					class: 'text-blue-600 underline hover:text-blue-800',
 					rel: 'noopener noreferrer',
+					target: '_blank',
 				},
-				protocols: ['http', 'https', 'mailto', 'tel'],
-				validate: href => /^https?:\/\//.test(href) || /^mailto:/.test(href) || /^tel:/.test(href) || /^\//.test(href),
 			}),
 			Table.configure({
 				resizable: true,
@@ -176,6 +180,7 @@ export const EditorWrapper: React.FC<EditorWrapperProps> = ({
 			FontSize.configure({
 				types: ['textStyle'],
 			}),
+			Indent,
 			HorizontalRule.configure({
 				HTMLAttributes: {
 					class: 'hr-divider',
@@ -184,7 +189,6 @@ export const EditorWrapper: React.FC<EditorWrapperProps> = ({
 			CharacterCount.configure({
 				limit: 100000,
 			}),
-			Autolink,
 		],
 		content: value,
 		onUpdate: ({ editor }) => {
@@ -239,19 +243,7 @@ export const EditorWrapper: React.FC<EditorWrapperProps> = ({
 	const handleSearchToggle = () => setShowSearch(!showSearch);
 	const handleSearchTermChange = (term: string) => setSearchTerm(term);
 	const handlePreviewToggle = () => setIsPreviewMode(!isPreviewMode);
-	const handleImageUploadClick = () => {
-		setShowImageDialog(true);
-	};
-
-	const handleImageUploadFromDialog = async (file: File) => {
-		return await uploadImage(file);
-	};
-
-	const handleImageUrlInsert = (url: string, alt: string) => {
-		if (editor) {
-			editor.chain().focus().setImage({ src: url, alt }).run();
-		}
-	};
+	const handleImageUploadClick = () => fileInputRef.current?.click();
 
 	const handleExportHTML = () => exportToHTML(editor);
 	const handleExportMarkdown = () => exportToMarkdown(editor);
@@ -269,39 +261,7 @@ export const EditorWrapper: React.FC<EditorWrapperProps> = ({
 		}
 	};
 
-	const handleInsertTable = (rows: number, cols: number, withHeader: boolean) => {
-		if (!editor) return;
-
-		try {
-			// Use Tiptap's built-in table insertion
-			editor.chain().focus().insertTable({
-				rows: rows,
-				cols: cols,
-				withHeaderRow: withHeader
-			}).run();
-		} catch (error) {
-			console.error('Error inserting table:', error);
-			// Fallback: Insert HTML table
-			const tableHTML = generateTableHTML(rows, cols, withHeader);
-			editor.chain().focus().insertContent(tableHTML).run();
-		}
-	};
-
-	const generateTableHTML = (rows: number, cols: number, withHeader: boolean): string => {
-		const headers = Array.from({ length: cols }, (_, i) => `<th>Header ${i + 1}</th>`).join('');
-		const bodyRowsCount = withHeader ? rows - 1 : rows;
-		const bodyRows = Array.from({ length: bodyRowsCount }, (_, i) => {
-			const rowCells = Array.from({ length: cols }, (_, j) => `<td>Cell ${i + 1}-${j + 1}</td>`).join('');
-			return `<tr>${rowCells}</tr>`;
-		}).join('');
-
-		return `
-      <table>
-        ${withHeader ? `<thead><tr>${headers}</tr></thead>` : ''}
-        <tbody>${bodyRows}</tbody>
-      </table>
-    `;
-	};
+	const handleInsertTable = () => insertTable(editor);
 	const handleInsertSymbol = (symbol: string) => insertSymbol(editor, symbol);
 	const handleInsertDateTime = () => insertDateTime(editor);
 	const handleInsertPageBreak = () => insertPageBreak(editor);
@@ -331,52 +291,36 @@ export const EditorWrapper: React.FC<EditorWrapperProps> = ({
 			return;
 		}
 
-		const linkAttributes = {
-			href: url,
-			target: target,
-			rel: target === '_blank' ? 'noopener noreferrer' : null,
-			class: 'editor-link'
-		};
-
 		// If we have text and no text is selected, insert the text first
 		if (text && editor.state.selection.empty) {
 			editor.chain()
 				.focus()
 				.insertContent(text)
-				.setTextSelection({
-					from: editor.state.selection.from - text.length,
-					to: editor.state.selection.from
-				})
-				.setLink(linkAttributes)
+				.setTextSelection({ from: editor.state.selection.from - text.length, to: editor.state.selection.from })
+				.setLink({ href: url, target })
 				.run();
 		} else if (text && !editor.state.selection.empty) {
 			// Replace selected text and apply link
 			editor.chain()
 				.focus()
 				.insertContent(text)
-				.setTextSelection({
-					from: editor.state.selection.from - text.length,
-					to: editor.state.selection.from
-				})
-				.setLink(linkAttributes)
+				.setTextSelection({ from: editor.state.selection.from - text.length, to: editor.state.selection.from })
+				.setLink({ href: url, target })
 				.run();
 		} else {
 			// Just apply link to selection or insert URL
 			if (editor.state.selection.empty) {
-				const displayText = text || url;
 				editor.chain()
 					.focus()
-					.insertContent(displayText)
-					.setTextSelection({
-						from: editor.state.selection.from - displayText.length,
-						to: editor.state.selection.from
-					})
-					.setLink(linkAttributes)
+					.insertContent(url)
+					.setTextSelection({ from: editor.state.selection.from - url.length, to: editor.state.selection.from })
+					.setLink({ href: url, target })
 					.run();
 			} else {
 				editor.chain()
 					.focus()
-					.setLink(linkAttributes)
+					.extendMarkRange('link')
+					.setLink({ href: url, target })
 					.run();
 			}
 		}
@@ -428,7 +372,7 @@ export const EditorWrapper: React.FC<EditorWrapperProps> = ({
 				onCopyToClipboard={handleCopyToClipboard}
 				onPasteFromClipboard={handlePasteFromClipboard}
 				onInsertTemplate={handleInsertTemplate}
-				onInsertTable={() => setShowTableDialog(true)}
+				onInsertTable={handleInsertTable}
 				onInsertSymbol={handleInsertSymbol}
 				onInsertDateTime={handleInsertDateTime}
 				onInsertPageBreak={handleInsertPageBreak}
@@ -472,21 +416,6 @@ export const EditorWrapper: React.FC<EditorWrapperProps> = ({
 					)}
 				</div>
 			</div>
-
-			{/* Table Dialog */}
-			<TableDialog
-				isOpen={showTableDialog}
-				onClose={() => setShowTableDialog(false)}
-				onInsert={handleInsertTable}
-			/>
-
-			{/* Image Upload Dialog */}
-			<ImageUploadDialog
-				isOpen={showImageDialog}
-				onClose={() => setShowImageDialog(false)}
-				onUpload={handleImageUploadFromDialog}
-				onInsertUrl={handleImageUrlInsert}
-			/>
 
 			{/* Link Dialog */}
 			<LinkDialog
@@ -561,29 +490,16 @@ export const EditorWrapper: React.FC<EditorWrapperProps> = ({
           line-height: 1.75;
         }
 
-        /* Links - Enhanced styling */
-        .ProseMirror a,
-        .ProseMirror .editor-link {
-          color: #3182ce !important;
-          text-decoration: underline;
-          cursor: pointer;
-          transition: all 0.2s ease;
+        .ProseMirror a {
+          color: #3182ce;
+          text-decoration: none;
           border-bottom: 1px solid transparent;
+          transition: all 0.2s ease;
         }
 
-        .ProseMirror a:hover,
-        .ProseMirror .editor-link:hover {
-          color: #2c5aa0 !important;
+        .ProseMirror a:hover {
           border-bottom-color: #3182ce;
-          background-color: rgba(59, 130, 246, 0.1);
-        }
-
-        /* Link selection styling */
-        .ProseMirror a.ProseMirror-selectednode,
-        .ProseMirror .editor-link.ProseMirror-selectednode {
-          outline: 2px solid #3182ce;
-          outline-offset: 2px;
-          border-radius: 2px;
+          color: #2c5aa0;
         }
 
         /* Simple TinyMCE-style blockquote */

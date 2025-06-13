@@ -53,29 +53,17 @@
   line-height: 1.75;
 }
 
-/* Links - Enhanced styling */
-.ProseMirror a,
-.ProseMirror .editor-link {
-  color: #3182ce !important;
-  text-decoration: underline;
-  cursor: pointer;
-  transition: all 0.2s ease;
+/* Links */
+.ProseMirror a {
+  color: #3182ce;
+  text-decoration: none;
   border-bottom: 1px solid transparent;
+  transition: all 0.2s ease;
 }
 
-.ProseMirror a:hover,
-.ProseMirror .editor-link:hover {
-  color: #2c5aa0 !important;
+.ProseMirror a:hover {
   border-bottom-color: #3182ce;
-  background-color: rgba(59, 130, 246, 0.1);
-}
-
-/* Link selection styling */
-.ProseMirror a.ProseMirror-selectednode,
-.ProseMirror .editor-link.ProseMirror-selectednode {
-  outline: 2px solid #3182ce;
-  outline-offset: 2px;
-  border-radius: 2px;
+  color: #2c5aa0;
 }
 
 /* Blockquotes - Simple TinyMCE style */
@@ -184,13 +172,49 @@
 
 /* Lists */
 .ProseMirror ul, .ProseMirror ol {
-  padding-left: 2em;
+  padding-left: 1.5em;
   margin: 1.5em 0;
 }
 
 .ProseMirror li {
   margin-bottom: 0.5em;
   line-height: 1.7;
+}
+
+.ProseMirror li p {
+  margin: 0;
+}
+
+/* Nested lists */
+.ProseMirror li > ul,
+.ProseMirror li > ol {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+}
+
+/* List item markers */
+.ProseMirror ul {
+  list-style-type: disc;
+}
+
+.ProseMirror ul ul {
+  list-style-type: circle;
+}
+
+.ProseMirror ul ul ul {
+  list-style-type: square;
+}
+
+.ProseMirror ol {
+  list-style-type: decimal;
+}
+
+.ProseMirror ol ol {
+  list-style-type: lower-alpha;
+}
+
+.ProseMirror ol ol ol {
+  list-style-type: lower-roman;
 }
 
 /* Task Lists */
@@ -221,21 +245,35 @@
   margin-right: 0.75rem;
   user-select: none;
   cursor: pointer;
+  display: flex;
+  align-items: center;
 }
 
 .ProseMirror ul[data-type="taskList"] li > label input[type="checkbox"] {
   width: 16px;
   height: 16px;
   accent-color: #3182ce;
+  cursor: pointer;
 }
 
 .ProseMirror ul[data-type="taskList"] li > div {
   flex: 1 1 auto;
 }
 
+.ProseMirror ul[data-type="taskList"] li > div p {
+  margin: 0;
+}
+
 .ProseMirror ul[data-type="taskList"] li[data-checked="true"] > div {
   text-decoration: line-through;
   color: #718096;
+  opacity: 0.7;
+}
+
+/* Nested task lists */
+.ProseMirror ul[data-type="taskList"] ul[data-type="taskList"] {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
 }
 
 /* Highlights */
